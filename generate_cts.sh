@@ -7,7 +7,6 @@ OUTPUT_DIR="/home/matthew/final_project/wg-fuzz/no_swarm"
 
 # Loop from 1 to num_loops
 while [ $i -le $MAX_FILES ]; do
-	do
 	  echo "Iteration $i"
 	  
 	  # Run cargo
@@ -19,8 +18,10 @@ while [ $i -le $MAX_FILES ]; do
 	  cp -r out/* "${OUTPUT_DIR}/${i}/"
  
 	  # Check if test.js exists and concatenate it to a new file
-	  cat ./ctsHeader.ts >> "${OUTPUT_DIR}/${i}/test.spec.ts"
+	  cat ./ctsHeader.ts "${OUTPUT_DIR}/${i}/test.js" > "${OUTPUT_DIR}/${i}/test.spec.ts"
 
 	  # Remove the original test.js
 	  rm "${OUTPUT_DIR}/${i}/test.js"
+
+	  ((i++))
 done
