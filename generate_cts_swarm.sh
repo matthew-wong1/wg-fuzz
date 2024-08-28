@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Assign the number of loops to a variable
-i=1
+i=305
 MAX_FILES=1000
-OUTPUT_DIR="/home/matthew/final_project/wg-fuzz/swarm_actual"
+OUTPUT_DIR="/home/matthew/final_project/wg-fuzz/swarm_80"
 
 # Loop from 1 to num_loops
 while [ $i -le $MAX_FILES ]; do
 	  echo "Iteration $i"
 	  
 	  # Run cargo
-	  cargo run -- 0.5 0.0 0
+	  cargo run -- 0.8 0.0 0
 	  
 	  mkdir -p "${OUTPUT_DIR}/${i}"
 	  
