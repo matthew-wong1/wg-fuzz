@@ -1,0 +1,122 @@
+// {"0:0":[163,205,3,219,175,74,156,57]}
+// Seed: 1335485816794703329
+
+struct Struct_1 {
+    a: u32,
+    b: vec4<i32>,
+    c: vec4<i32>,
+    d: f32,
+}
+
+struct Struct_2 {
+    a: u32,
+    b: i32,
+    c: Struct_1,
+    d: vec2<bool>,
+    e: i32,
+}
+
+struct Struct_3 {
+    a: vec4<bool>,
+    b: vec3<f32>,
+    c: u32,
+}
+
+struct Struct_4 {
+    a: Struct_1,
+    b: bool,
+    c: vec4<i32>,
+    d: f32,
+}
+
+struct Struct_5 {
+    a: i32,
+    b: Struct_3,
+}
+
+struct UniformBuffer {
+    a: vec2<i32>,
+}
+
+struct StorageBuffer {
+    a: f32,
+}
+
+@group(0)
+@binding(0)
+var<uniform> u_input: UniformBuffer;
+
+@group(0)
+@binding(1)
+var<storage, read_write> s_output: StorageBuffer;
+
+fn func_3() -> vec4<u32> {
+    var var_0 = floor(-((exp2(1187f) * -657f) + -max(455f, -809f)));
+    let var_1 = Struct_3(select(vec4<bool>(!any(vec4<bool>(false, true, false, false)), true, true, !false), vec4<bool>(trunc(-1000f) <= round(1000f), false, !all(vec2<bool>(true, true)), false), vec4<bool>(true, !select(false, false, true), any(!vec4<bool>(false, false, false, true)), (109048u | 19646u) > (28228u ^ 1u))), abs(vec3<f32>(-147f, round(-564f - -618f), (-167f * 669f) + abs(-922f))), firstLeadingBit(~(~select(1u, 84727u, true))));
+    let var_2 = Struct_1((((var_1.c | 19845u) / (4294967295u - var_1.c)) ^ ~(0u - 0u)) | var_1.c, (countOneBits(~vec4<i32>(u_input.a.x, -43086i, -48166i, -1i)) - ~abs(vec4<i32>(47969i, u_input.a.x, u_input.a.x, -25807i))) ^ (abs(vec4<i32>(u_input.a.x, u_input.a.x, u_input.a.x, -1i)) ^ -vec4<i32>(u_input.a.x, 32123i, 4331i, 1i)), vec4<i32>(~clamp(u_input.a.x, -13051i & u_input.a.x, firstTrailingBit(u_input.a.x)), 0i, dot(~(~vec4<i32>(1514i, -19028i, 8690i, -32781i)), ~(vec4<i32>(u_input.a.x, u_input.a.x, -1i, u_input.a.x) << vec4<u32>(0u, 4294967295u, var_1.c, var_1.c))), dot(-vec2<i32>(u_input.a.x, u_input.a.x), u_input.a) & ~(-29864i)), -(-var_1.b.x) / -step(-1841f, var_1.b.x));
+    var_0 = ceil(var_1.b.x);
+    let var_3 = 20195u;
+    return reverseBits(firstLeadingBit(select(~(vec4<u32>(var_1.c, var_2.a, 0u, var_2.a) >> vec4<u32>(26184u, 1u, var_3, var_1.c)), max(select(vec4<u32>(1u, 139u, 0u, 0u), vec4<u32>(var_2.a, var_2.a, var_1.c, var_3), true), vec4<u32>(var_1.c, var_1.c, var_1.c, 1u) ^ vec4<u32>(0u, var_3, 1u, 0u)), select(!var_1.a, var_1.a, !var_1.a.x))));
+}
+
+fn func_2(arg_0: vec2<i32>, arg_1: bool, arg_2: vec2<f32>, arg_3: i32) -> Struct_3 {
+    let var_0 = func_3();
+    let var_1 = Struct_3(vec4<bool>(true, false, arg_1, false), -(vec3<f32>(abs(arg_2.x), min(116f, 1000f), -678f) / ((vec3<f32>(239f, 215f, -1530f) / vec3<f32>(arg_2.x, arg_2.x, 535f)) - vec3<f32>(arg_2.x, arg_2.x, arg_2.x))), max(var_0.x, var_0.x));
+    var var_2 = Struct_5(firstTrailingBit(7492i), var_1);
+    var_2 = Struct_5(max(clamp(arg_0.x, arg_0.x + 41696i, abs(select(-85071i, 2147483647i, false))), firstLeadingBit(i32(-2147483648))), var_2.b);
+    var var_3 = Struct_2(var_0.x << 73845u, 2147483647i, Struct_1(firstLeadingBit(~(38211u << var_1.c)), -((vec4<i32>(u_input.a.x, var_2.a, -71008i, 2147483647i) % vec4<i32>(u_input.a.x, 7347i, -9229i, -1i)) ^ -vec4<i32>(0i, i32(-2147483648), arg_0.x, 1i)), vec4<i32>(-1i + arg_3, -18776i, dot(firstLeadingBit(u_input.a), ~u_input.a), var_2.a), -var_1.b.x), var_1.a.yz, reverseBits(~(1i << var_0.x) * arg_0.x));
+    return Struct_3(var_1.a, var_2.b.b, ~0u & func_3().x);
+}
+
+fn func_4(arg_0: u32, arg_1: f32, arg_2: f32, arg_3: Struct_5) -> Struct_1 {
+    var var_0 = -vec4<f32>(exp2(exp2(arg_3.b.b.x * 622f)), (-arg_2 * 1000f) / ((472f * -896f) - arg_3.b.b.x), min(-(-107f), 272f), arg_3.b.b.x);
+    let var_1 = -1i;
+    var var_2 = ~select(abs(-u_input.a.x), -(~arg_3.a), !select(true, true, arg_3.b.a.x)) != 39297i;
+    var var_3 = vec4<f32>(839f, arg_2, func_2(vec2<i32>(min(arg_3.a, arg_3.a), -arg_3.a), select(true, true, arg_3.b.a.x) | false, func_2(vec2<i32>(2147483647i, arg_3.a), arg_3.b.a.x, vec2<f32>(-607f, arg_2), -59304i).b.xx - arg_3.b.b.xx, -min(-21283i, 2147483647i)).b.x / -(-var_0.x), ((var_0.x * var_0.x) / var_0.x) + 1009f);
+    var_3 = -vec4<f32>(-sign(-745f), var_0.x, -880f, exp2(-439f)) - -vec4<f32>(-(-1608f), max(arg_2, -189f) - -989f, -(-arg_3.b.b.x), arg_3.b.b.x);
+    return Struct_1(4294967295u, (max(vec4<i32>(arg_3.a, u_input.a.x, -19402i, arg_3.a) << vec4<u32>(arg_0, arg_0, arg_3.b.c, 8804u), vec4<i32>(44251i, arg_3.a, u_input.a.x, u_input.a.x)) | -(-vec4<i32>(2147483647i, u_input.a.x, arg_3.a, arg_3.a))) >> ~(~(~vec4<u32>(arg_3.b.c, arg_3.b.c, 0u, 53257u))), ~vec4<i32>(u_input.a.x, ~arg_3.a, arg_3.a, var_1), 1000f);
+}
+
+fn func_5(arg_0: Struct_1, arg_1: vec4<u32>, arg_2: u32) -> Struct_1 {
+    var var_0 = Struct_5(-1i + func_4(~func_3().x, -343f * (1486f * arg_0.d), -857f, Struct_5(-2675i, func_2(arg_0.c.xz, true, vec2<f32>(arg_0.d, 274f), arg_0.c.x))).b.x, Struct_3(!(!(!vec4<bool>(true, true, true, true))), max(vec3<f32>(arg_0.d, 152f, -1158f), trunc(exp2(vec3<f32>(arg_0.d, 1621f, -680f)))), ~(arg_1.x / (20686u & 0u))));
+    let var_1 = ~abs(64675u);
+    var_0 = Struct_5(((arg_0.b.x + arg_0.c.x) * u_input.a.x) ^ ~0i, func_2(u_input.a, (36673u + var_1) != (firstTrailingBit(34280u) << dot(vec4<u32>(var_0.b.c, var_1, 4294967295u, 114731u), arg_1)), var_0.b.b.zx, max(func_4(~27031u, -1000f, -961f, Struct_5(i32(-2147483648), Struct_3(var_0.b.a, var_0.b.b, arg_0.a))).b.x, 1i)));
+    var var_2 = -(-sign(-vec3<f32>(747f, arg_0.d, arg_0.d) / select(var_0.b.b, var_0.b.b, true)));
+    let var_3 = Struct_4(func_4(~(firstTrailingBit(4294967295u) & ~1u), 776f, var_0.b.b.x, Struct_5(arg_0.c.x, var_0.b)), (firstTrailingBit(u_input.a.x) ^ select(1i, ~2147483647i, -1i >= arg_0.c.x)) < 0i, firstTrailingBit(vec4<i32>(-min(var_0.a, var_0.a), ~3593i << var_0.b.c, arg_0.c.x - (-1i % -1446i), 46673i)), -630f);
+    return Struct_1(60906u, ~arg_0.b | arg_0.b, reverseBits(-(vec4<i32>(-1i, -13393i, var_0.a, 21341i) << vec4<u32>(32526u, 21662u, 52857u, var_1))), (func_4(var_0.b.c, abs(arg_0.d), 120f, Struct_5(arg_0.b.x, Struct_3(vec4<bool>(true, var_3.b, var_3.b, var_0.b.a.x), vec3<f32>(-591f, 1173f, var_2.x), 1u))).d - -(228f - 1000f)) + (2550f - -sign(var_0.b.b.x)));
+}
+
+fn func_1(arg_0: f32, arg_1: u32) -> Struct_1 {
+    var var_0 = func_5(func_4(2725u, exp2(arg_0), -(-1000f + ceil(-1000f)), Struct_5((u_input.a.x - -1i) << arg_1, func_2(~u_input.a, false & false, -vec2<f32>(616f, 1043f), ~u_input.a.x))), ~(firstTrailingBit(~vec4<u32>(2314u, 22738u, arg_1, arg_1)) / vec4<u32>(arg_1, countOneBits(arg_1), arg_1 ^ arg_1, ~62453u)), ~(~(arg_1 & ~4294967295u)));
+    let var_1 = -1000f;
+    let var_2 = select((select(vec2<u32>(14586u, 1u) / vec2<u32>(var_0.a, var_0.a), max(vec2<u32>(4294967295u, arg_1), vec2<u32>(34089u, var_0.a)), vec2<bool>(false, true)) - select(vec2<u32>(arg_1, 4294967295u), countOneBits(vec2<u32>(var_0.a, var_0.a)), 1377f == var_0.d)) + vec2<u32>((0u + 4294967295u) & 27115u, ~(arg_1 - 4294967295u)), ~(~(~vec2<u32>(0u, 0u)) * vec2<u32>(abs(20777u), var_0.a | 67728u)), select(!func_2(vec2<i32>(var_0.b.x, 2147483647i), -2040f < var_0.d, vec2<f32>(var_1, -346f), countOneBits(1i)).a.zw, vec2<bool>((true && true) == true, true), select(vec2<bool>(!true, any(vec2<bool>(true, false))), select(func_2(var_0.c.zy, false, vec2<f32>(arg_0, var_1), u_input.a.x).a.wx, vec2<bool>(true, false), vec2<bool>(false, false)), !(var_0.a <= 2889u))));
+    var var_3 = -673f;
+    let var_4 = var_0.a;
+    return func_5(Struct_1(firstTrailingBit(min(~79400u, ~1u)), vec4<i32>(select(-18173i, 1i, false) + 0i, -11584i, dot(u_input.a, var_0.b.xx), abs(-u_input.a.x)), (-var_0.b / -var_0.b) * -(var_0.c << vec4<u32>(18456u, arg_1, arg_1, 4294967295u)), func_2(u_input.a, !(!false), exp2(step(vec2<f32>(-571f, 481f), vec2<f32>(var_0.d, var_1))), firstTrailingBit(0i) / (var_0.c.x / -72424i)).b.x), vec4<u32>((~var_0.a - var_2.x) & 8447u, 0u, var_0.a, func_2(abs(-var_0.c.yw), all(vec2<bool>(false, false)), -vec2<f32>(103f, 814f) + (vec2<f32>(-331f, -1562f) + vec2<f32>(arg_0, var_0.d)), -64440i).c), dot(vec2<u32>(firstLeadingBit(arg_1), ~var_2.x), ~(vec2<u32>(11008u, 2467u) >> var_2)) & countOneBits(func_2(var_0.b.xz, var_0.c.x >= 27395i, trunc(vec2<f32>(649f, arg_0)), u_input.a.x).c));
+}
+
+fn func_6(arg_0: Struct_1, arg_1: Struct_3, arg_2: i32) -> Struct_4 {
+    let var_0 = !arg_1.a;
+    var var_1 = Struct_4(func_1(((arg_0.d + -561f) * (arg_0.d + arg_0.d)) - arg_1.b.x, 85198u), true, min(arg_0.c, vec4<i32>(-19896i, 5969i, 31284i, min(10940i ^ arg_2, firstLeadingBit(76565i)))), 173f - arg_0.d);
+    var_1 = Struct_4(func_4(~(~arg_0.a), func_1(sign(-2729f), 0u).d, -(-var_1.a.d), Struct_5(~(-arg_2), arg_1)), any(vec4<bool>(select(var_0.x, var_0.x, !false), false, any(select(vec2<bool>(true, var_0.x), vec2<bool>(arg_1.a.x, var_0.x), var_1.b)), !(!var_0.x))), vec4<i32>(abs(-1i), func_5(Struct_1(0u, arg_0.b, vec4<i32>(i32(-2147483648), 0i, arg_0.c.x, -18879i), -1555f), vec4<u32>(arg_1.c, 23432u, 17365u, var_1.a.a) | vec4<u32>(31264u, 1u, var_1.a.a, 12438u), arg_0.a >> arg_0.a).c.x, -964i, var_1.c.x) << clamp(select(vec4<u32>(0u, var_1.a.a, arg_1.c, 52216u) * vec4<u32>(var_1.a.a, 27568u, 138285u, arg_1.c), func_3(), !false), vec4<u32>(0u, 3663u, min(20959u, 49454u), arg_1.c / 0u), firstTrailingBit(~vec4<u32>(4294967295u, 80418u, arg_0.a, 40754u))), arg_0.d);
+    var_1 = Struct_4(Struct_1(func_2(~vec2<i32>(u_input.a.x, 22814i), !(arg_2 > var_1.c.x), -arg_1.b.zy, countOneBits(func_5(arg_0, vec4<u32>(arg_1.c, 4294967295u, 0u, arg_1.c), arg_1.c).c.x)).c, arg_0.c, firstLeadingBit(arg_0.b << ~vec4<u32>(var_1.a.a, arg_0.a, 1u, 1u)), 1499f), !var_0.x, countOneBits(arg_0.c - firstTrailingBit(max(arg_0.b, var_1.a.c))), arg_1.b.x);
+    var_1 = Struct_4(Struct_1(~(func_1(var_1.a.d, 0u).a >> 33564u), firstLeadingBit(vec4<i32>(~0i, i32(-2147483648) % var_1.c.x, var_1.c.x, min(var_1.c.x, i32(-2147483648)))), vec4<i32>(firstTrailingBit(-57401i), 1i, arg_2, ~u_input.a.x) ^ vec4<i32>(abs(arg_0.c.x), ~arg_2, ~u_input.a.x, dot(arg_0.b, vec4<i32>(1i, 0i, -8030i, 0i))), func_1(-(-var_1.d), 1u).d), !(!false), (-(arg_0.b * vec4<i32>(arg_0.c.x, -1i, var_1.a.c.x, -13493i)) - arg_0.c) << abs(~vec4<u32>(1u, var_1.a.a, arg_0.a, var_1.a.a) * vec4<u32>(0u, arg_1.c, 1u, 4294967295u)), -(-1000f));
+    return Struct_4(func_1(-var_1.a.d * var_1.a.d, ~(~var_1.a.a) << (var_1.a.a - ~1503u)), !false & !(!any(arg_1.a.xy)), vec4<i32>(var_1.a.b.x, dot(vec4<i32>(1i, abs(arg_2), arg_2 % -35479i, ~(i32(-2147483648))), select(var_1.a.c >> vec4<u32>(arg_0.a, 4294967295u, var_1.a.a, 85063u), abs(var_1.a.b), var_1.b)), countOneBits(0i) ^ (~(i32(-2147483648)) << 60140u), 16057i), (2510f - arg_1.b.x) + -round(-471f));
+}
+
+@compute
+@workgroup_size(1)
+fn main() {
+    let var_0 = func_6(func_1(step(1036f - 958f, (-1000f + -1149f) + (1441f * 1852f)), 70956u), Struct_3(func_2(u_input.a, any(vec2<bool>(false, true)) && false, vec2<f32>(max(-127f, 735f), -823f + -108f), i32(-2147483648)).a, -(-vec3<f32>(338f, -541f, 1338f)) + abs(round(vec3<f32>(921f, 1023f, -1135f))), 1u), u_input.a.x);
+    let var_1 = func_6(var_0.a, func_2(countOneBits(clamp(-vec2<i32>(u_input.a.x, var_0.a.b.x), u_input.a / u_input.a, ~u_input.a)), all(!select(vec4<bool>(false, false, var_0.b, var_0.b), vec4<bool>(var_0.b, false, false, var_0.b), var_0.b)), vec2<f32>(select(abs(var_0.a.d), 1000f / var_0.a.d, true), max(var_0.d * var_0.a.d, 385f)), func_1(max(var_0.d, var_0.a.d), ~var_0.a.a).c.x / var_0.a.b.x), select((func_4(var_0.a.a, var_0.a.d, 1836f, Struct_5(i32(-2147483648), Struct_3(vec4<bool>(true, false, true, var_0.b), vec3<f32>(169f, var_0.a.d, 686f), var_0.a.a))).c.x - (var_0.c.x | u_input.a.x)) ^ -(var_0.a.b.x << 4294967295u), reverseBits(countOneBits(select(0i, u_input.a.x, var_0.b))), true));
+    let var_2 = !var_1.b | all(func_2(var_1.a.c.wx, var_1.b, trunc(exp2(vec2<f32>(var_0.a.d, -1546f))), 1i | reverseBits(-14099i)).a);
+    var var_3 = !func_2(func_6(Struct_1(max(var_0.a.a, 1u), var_1.a.c / var_1.a.c, ~var_0.c, 1625f), Struct_3(vec4<bool>(var_2, true, var_1.b, false), vec3<f32>(var_0.a.d, 1000f, var_1.a.d), var_0.a.a), select(~2147483647i, 4349i, !var_0.b)).c.zy, var_1.b, select(vec2<f32>(-1184f, -385f), vec2<f32>(var_1.d, var_1.d) - vec2<f32>(1000f, -718f), !(!vec2<bool>(var_2, false))), var_1.c.x).a.xzx;
+    var var_4 = var_1.b;
+    var var_5 = var_0.d;
+    let var_6 = func_3();
+    var var_7 = vec4<bool>(var_3.x, false, !false & any(vec2<bool>(func_2(vec2<i32>(i32(-2147483648), var_0.c.x), false, vec2<f32>(1339f, -188f), 29796i).a.x, !true)), any(vec3<bool>(var_3.x, false, var_3.x)) == all(var_3.zy));
+    let var_8 = var_0.b;
+    let x = u_input.a;
+    s_output = StorageBuffer(-1228f);
+}
+

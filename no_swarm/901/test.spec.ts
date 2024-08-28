@@ -16,30 +16,55 @@ const fs = require('node:fs/promises');
 async function main(gpu: GPU) {
     
     
-    
-    const array0 = new Float32Array([0.75, 1.0, 0.5, 0.5, -0.25, 0.5, 0.5, -0.75, 0.5, -0.5, -0.25, 0.75, -1.0, -0.75, 0.0, 1.0, -0.5, 0.25, -0.5, -0.75, 0.0, 0.5, 0.75, -0.25, 0.25, -0.5, 0.75, 0.25, 0.25, -0.75, 1.0, -0.5, -0.75, 1.0, 0.75, 0.5, 0.75, 1.0, 0.5, -1.0, -0.25, 0.0, 1.0, -0.5, 1.0, -0.25, 1.0, -0.5, -0.5, -1.0, -0.5, -0.5, -0.5, -0.25, 0.5, 0.0, -0.25, -1.0, -1.0, 0.25, 0.25, -1.0, -1.0, -0.5, -0.5, -0.25, 1.0, 0.0, 0.5, -0.25, 0.75, -0.25, -0.5, -0.5, 0.75, 0.5, 0.5, 0.5, 1.0, -0.25, -1.0, 0.75, 0.0, -1.0, -0.25, 0.25, 0.75, -0.5, 0.75, 0.75, -0.75, -0.75, -0.75, -1.0, 0.0, -0.5, -0.75, 0.0, -1.0, 1.0, ]);
     const adapter0 = await gpu.requestAdapter({
         powerPreference: undefined
     });
     
     
-    const array1 = new Float32Array([0.5, -0.5, 0.75, -0.25, 0.75, 0.0, 0.25, -0.5, 0.75, 0.75, -0.25, -0.5, -0.25, -0.75, -1.0, -0.75, 1.0, 0.5, 0.25, -0.25, 0.5, 0.0, 1.0, -1.0, 0.75, 0.25, 0.0, -0.5, 0.0, -0.75, 0.0, -0.75, 0.25, -0.25, -0.5, 0.25, 0.25, 0.25, -0.75, 0.0, 0.0, -0.75, -0.5, -0.25, 0.75, -0.5, 0.25, 1.0, 0.5, -0.75, 0.25, 0.25, 0.0, 0.75, 1.0, 0.5, 0.0, 0.25, 0.5, 1.0, -1.0, -0.25, 0.5, -0.25, 0.5, -0.5, -0.25, -0.75, -0.75, -0.75, 0.75, 1.0, -0.25, 0.0, 0.75, 0.5, 0.5, -1.0, -0.75, 0.25, 0.5, 0.75, 0.0, 0.0, 1.0, 1.0, -1.0, 1.0, -0.5, 1.0, -0.5, -1.0, 0.25, -0.25, -0.75, -0.75, 0.0, 0.0, 0.25, -0.25, ]);
     const adapter1 = await gpu.requestAdapter({
         powerPreference: "low-power"
     });
-    
-    
     const device00 = await adapter0!.requestDevice({ label: "device00" });
-    device00.pushErrorScope("internal");
-    const sampler000 = device00.createSampler( { label: "sampler000" } );
-    const adapter2 = await gpu.requestAdapter({
-        powerPreference: "low-power"
+    const buffer000 = device00.createBuffer({
+        label: "buffer000",
+        size: 400,
+        usage: GPUBufferUsage.VERTEX
     });
+    const sampler000 = device00.createSampler( { label: "sampler000" } );
+    
+    
+    device00.pushErrorScope("internal");
+    
+    
+    
+    var shader_module000_code = "";
+    try {
+        shader_module000_code = await fs.readFile(__dirname + '/shader_module000.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module000 = await device00.createShaderModule({ label: "shader_module000", code: shader_module000_code })
     device00.popErrorScope().then((error) => {
         if (error) {
             console.error(`An error occurred: ${error.message}`);
         }
     });
+    var shader_module001_code = "";
+    try {
+        shader_module001_code = await fs.readFile(__dirname + '/render_shader.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module001 = await device00.createShaderModule({ label: "shader_module001", code: shader_module001_code })
+    const buffer001 = device00.createBuffer({
+        label: "buffer001",
+        size: 400,
+        usage: GPUBufferUsage.QUERY_RESOLVE
+    });
+    buffer001.destroy()
+    
+    
+    const command_encoder000 = device00.createCommandEncoder({ label: "command_encoder000" });
     const query000 = device00.createQuerySet({
         label: "query000",
         type: "occlusion",
@@ -49,392 +74,997 @@ async function main(gpu: GPU) {
         label: "render_bundle_encoder000",
         colorFormats: ["bgra8unorm"]
     });
+    const render_pipeline000 = device00.createRenderPipeline({
+        label: "render_pipeline000",
+        vertex: {
+            module: shader_module001,
+            entryPoint: "vertex_main",
+            buffers: [
+                {
+                    attributes: [
+                        {
+                            shaderLocation: 0, // position
+                            offset: 0,
+                            format: "float32x4",
+                        },
+                        {
+                            shaderLocation: 1, // color
+                            offset: 16,
+                            format: "float32x4",
+                        },
+                    ],
+                    arrayStride: 32,
+                    stepMode: "vertex",
+                },
+            ],
+        },
+        fragment: {
+            module: shader_module001,
+            entryPoint: "fragment_main",
+            targets: [
+                {
+                    format: gpu.getPreferredCanvasFormat(),
+                },
+            ],
+        },
+        primitive: {
+            topology: "triangle-list",
+        },
+        layout: "auto"
+    });
+    const render_bundle_encoder001 = device00.createRenderBundleEncoder({
+        label: "render_bundle_encoder001",
+        colorFormats: ["bgra8unorm"]
+    });
+    
+    command_encoder000.resolveQuerySet(
+        query000,
+        0,
+        32,
+        buffer001,
+        0
+    )
+    
+    
+    render_bundle_encoder000.insertDebugMarker("marker");
+    const array0 = new Float32Array([1.0, -0.25, 0.5, -0.25, 1.0, -0.75, -0.5, -0.5, 0.0, -0.25, 1.0, -1.0, -1.0, -0.75, -1.0, -0.75, 1.0, -0.75, -0.75, 0.5, -1.0, -0.25, -0.25, 0.5, 0.5, 0.0, 0.75, 0.25, 0.75, 1.0, -0.25, -0.25, 0.75, -0.5, -0.25, 0.75, -0.75, -0.75, 0.0, 0.25, -0.75, 0.0, 0.5, 0.75, -0.5, 0.75, 0.0, 1.0, -0.75, 0.0, -0.25, 1.0, -1.0, -0.75, 0.0, -0.75, -0.75, 0.75, -0.5, 0.75, -0.75, -0.5, -0.5, -1.0, -0.5, 0.25, 0.75, 0.0, 1.0, -0.5, 0.5, 1.0, 0.75, 0.75, 0.75, 0.25, -0.25, -1.0, -1.0, -0.75, -0.5, 1.0, -0.5, -1.0, -0.5, 0.5, 0.25, 0.25, 1.0, 0.0, 0.25, 0.0, -1.0, 0.75, -0.75, 0.0, 0.5, -1.0, 0.75, 0.0, ]);
+    
+    render_bundle_encoder000.insertDebugMarker("marker");
+    buffer000.destroy()
+    const adapter2 = await gpu.requestAdapter({
+        powerPreference: undefined
+    });
+    var shader_module002_code = "";
+    try {
+        shader_module002_code = await fs.readFile(__dirname + '/shader_module002.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module002 = await device00.createShaderModule({ label: "shader_module002", code: shader_module002_code })
+    
+    command_encoder000.resolveQuerySet(
+        query000,
+        0,
+        32,
+        buffer001,
+        0
+    )
+    const compute_pass_encoder0000 = command_encoder000.beginComputePass({ label: "compute_pass_encoder0000" });
+    
+    query000.destroy()
+    const sampler001 = device00.createSampler( { label: "sampler001" } );
+    
+    compute_pass_encoder0000.pushDebugGroup("group_marker")
+    var shader_module003_code = "";
+    try {
+        shader_module003_code = await fs.readFile(__dirname + '/shader_module003.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module003 = await device00.createShaderModule({ label: "shader_module003", code: shader_module003_code })
+    compute_pass_encoder0000.insertDebugMarker("marker")
+    render_bundle_encoder001.pushDebugGroup("group_marker");
+    
+    
+    
+    query000.destroy()
+    
+    
+    
+    var shader_module004_code = "";
+    try {
+        shader_module004_code = await fs.readFile(__dirname + '/shader_module004.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module004 = await device00.createShaderModule({ label: "shader_module004", code: shader_module004_code })
+    const sampler002 = device00.createSampler( { label: "sampler002" } );
+    const adapter3 = await gpu.requestAdapter({
+        powerPreference: "low-power"
+    });
+    const texture000 = device00.createTexture({
+        label: "texture000",
+        size: [10, 10],
+        usage: GPUTextureUsage.STORAGE_BINDING,
+        format: "r32float",
+        dimension: "2d"
+    });
+    render_bundle_encoder001.setPipeline(render_pipeline000);
+    const adapter4 = await gpu.requestAdapter({
+        powerPreference: undefined
+    });
+    render_bundle_encoder001.insertDebugMarker("marker");
+    
+    texture000.destroy();
+    
+    const render_bundle_encoder002 = device00.createRenderBundleEncoder({
+        label: "render_bundle_encoder002",
+        colorFormats: ["bgra8unorm"]
+    });
+    const buffer002 = device00.createBuffer({
+        label: "buffer002",
+        size: 400,
+        usage: GPUBufferUsage.UNIFORM
+    });
+
+    const buffer003 = device00.createBuffer({
+        label: "buffer003",
+        size: 400,
+        usage: GPUBufferUsage.STORAGE
+    });
+    
+    const bind_group000 = device00.createBindGroup({
+        label: "bind_group000",
+        layout: render_pipeline000.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: {
+                    buffer: buffer002,
+                },
+            },
+            {
+                binding: 1,
+                resource: {
+                    buffer: buffer003,
+                },
+            },
+        ],
+    });
+
+    render_bundle_encoder001.setBindGroup(0, bind_group000);
+    
+    const texture001 = device00.createTexture({
+        label: "texture001",
+        size: [10, 10],
+        usage: GPUTextureUsage.STORAGE_BINDING,
+        format: "r32float",
+        dimension: "2d"
+    });
+    compute_pass_encoder0000.insertDebugMarker("marker")
+    const bind_group_layout000 = device00.createBindGroupLayout({ 
+        label: "bind_group_layout000",
+        entries: [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.COMPUTE,
+                buffer: {
+                    type: "uniform",
+                },
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.COMPUTE,
+                buffer: {
+                    type: "storage",
+                }
+            }
+        ]
+    });
+    render_bundle_encoder002.setPipeline(render_pipeline000);
+    
+    
+    const adapter5 = await gpu.requestAdapter({
+        powerPreference: "high-performance"
+    });
+    
+    const buffer004 = device00.createBuffer({
+        label: "buffer004",
+        size: 400,
+        usage: GPUBufferUsage.UNIFORM
+    });
+
+    const buffer005 = device00.createBuffer({
+        label: "buffer005",
+        size: 400,
+        usage: GPUBufferUsage.STORAGE
+    });
+    
+    const bind_group001 = device00.createBindGroup({
+        label: "bind_group001",
+        layout: render_pipeline000.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: {
+                    buffer: buffer004,
+                },
+            },
+            {
+                binding: 1,
+                resource: {
+                    buffer: buffer005,
+                },
+            },
+        ],
+    });
+
+    render_bundle_encoder002.setBindGroup(0, bind_group001);
+    const command_encoder001 = device00.createCommandEncoder({ label: "command_encoder001" });
+    
+    const array1 = new Float32Array([0.25, 0.5, -0.25, -0.5, 0.0, -0.75, 0.25, -0.75, 1.0, 0.0, 1.0, 1.0, 1.0, -0.25, -0.5, -1.0, 0.75, 0.75, 1.0, 0.0, 1.0, 0.25, -0.75, -0.25, 1.0, 0.0, -0.5, 0.0, 0.5, -0.25, -1.0, -0.5, -0.75, -1.0, -0.5, -0.25, 0.5, 1.0, 0.0, 0.25, 1.0, 0.5, -0.25, 0.5, -1.0, 0.5, -0.25, -0.5, 0.5, 0.0, 0.25, 0.5, 0.25, 0.75, -1.0, -0.25, 0.0, 0.75, 0.5, -0.75, 1.0, 0.0, 0.25, -1.0, -1.0, -0.75, 1.0, -0.5, -1.0, 0.0, 0.5, 0.75, -0.75, 0.0, -1.0, -0.5, 1.0, -0.5, -1.0, 0.0, -1.0, -0.75, -1.0, 0.0, 1.0, 0.0, 0.5, -0.75, -0.75, -0.75, 0.25, 0.5, 0.25, -1.0, 0.75, -0.25, 0.25, 0.0, 0.0, 0.75, ]);
+    render_bundle_encoder002.pushDebugGroup("group_marker");
+    
+    const texture002 = device00.createTexture({
+        label: "texture002",
+        size: [10, 10],
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        format: "r32float",
+        dimension: "2d"
+    });
+    
+    const compute_pass_encoder0010 = command_encoder001.beginComputePass({ label: "compute_pass_encoder0010" });
+    texture002.destroy();
+    render_bundle_encoder001.insertDebugMarker("marker");
+    render_bundle_encoder000.setPipeline(render_pipeline000);
+    
+    render_bundle_encoder001.popDebugGroup();
+    
+    texture001.destroy();
+    compute_pass_encoder0010.pushDebugGroup("group_marker")
+    render_bundle_encoder002.popDebugGroup();
+    compute_pass_encoder0010.insertDebugMarker("marker")
+    const pipeline_layout000 = device00.createPipelineLayout({ 
+        label: "pipeline_layout000",
+        bindGroupLayouts: [bind_group_layout000]
+    });
+    
+    const device20 = await adapter2!.requestDevice({ label: "device20" });
+    buffer005.destroy()
+    const buffer006 = device00.createBuffer({
+        label: "buffer006",
+        size: 400,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+    });
+    const command_encoder002 = device00.createCommandEncoder({ label: "command_encoder002" });
+    
+    const buffer007 = device00.createBuffer({
+        label: "buffer007",
+        size: 400,
+        usage: GPUBufferUsage.UNIFORM
+    });
+
+    const buffer008 = device00.createBuffer({
+        label: "buffer008",
+        size: 400,
+        usage: GPUBufferUsage.STORAGE
+    });
+    
+    const bind_group002 = device00.createBindGroup({
+        label: "bind_group002",
+        layout: render_pipeline000.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: {
+                    buffer: buffer007,
+                },
+            },
+            {
+                binding: 1,
+                resource: {
+                    buffer: buffer008,
+                },
+            },
+        ],
+    });
+
+    render_bundle_encoder000.setBindGroup(0, bind_group002);
+    
+    
+    render_bundle_encoder001.insertDebugMarker("marker");
+    device20.destroy();
+    const pipeline_layout001 = device00.createPipelineLayout({ 
+        label: "pipeline_layout001",
+        bindGroupLayouts: [bind_group_layout000]
+    });
+    var shader_module005_code = "";
+    try {
+        shader_module005_code = await fs.readFile(__dirname + '/shader_module005.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module005 = await device00.createShaderModule({ label: "shader_module005", code: shader_module005_code })
+    
+    
+    render_bundle_encoder001.setVertexBuffer(0, buffer000);
+    
+    
+    render_bundle_encoder002.pushDebugGroup("group_marker");
+    command_encoder002.insertDebugMarker("mymarker");
+    const adapter6 = await gpu.requestAdapter({
+        powerPreference: "high-performance"
+    });
+    render_bundle_encoder000.pushDebugGroup("group_marker");
+    
+    compute_pass_encoder0000.insertDebugMarker("marker")
+    const device60 = await adapter6!.requestDevice({ label: "device60" });
+    const query600 = device60.createQuerySet({
+        label: "query600",
+        type: "occlusion",
+        count: 32,
+    });
+    
+    device60.pushErrorScope("out-of-memory");
+    buffer003.destroy()
+    
+    buffer002.destroy()
+    const compute_pipeline000 = device00.createComputePipeline({
+        label: "compute_pipeline000",
+        layout: pipeline_layout000,
+        compute: {
+            module: shader_module004,
+            entryPoint: "main"
+        }
+    });
+    var shader_module006_code = "";
+    try {
+        shader_module006_code = await fs.readFile(__dirname + '/render_shader.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module006 = await device00.createShaderModule({ label: "shader_module006", code: shader_module006_code })
+    const array2 = new Float32Array([-0.25, 0.25, -1.0, 0.75, -1.0, -0.25, -0.5, -1.0, -0.75, 0.75, 1.0, 0.5, 0.0, -0.75, -1.0, -1.0, -0.75, -0.25, 0.0, -0.75, 0.25, 0.5, -0.5, 0.5, -0.25, 0.5, 0.75, -0.25, -0.75, -0.25, 0.75, 0.5, 0.25, -0.75, 1.0, 0.75, 0.75, 0.75, 1.0, 1.0, 0.25, -0.75, -1.0, 0.75, 0.5, 0.25, 1.0, -1.0, -0.5, -0.5, -0.75, -0.25, 0.25, -0.5, 1.0, -0.5, 0.5, 0.25, 0.0, -0.25, -0.5, -0.5, -1.0, -0.5, -0.75, 0.0, 0.75, 0.0, 1.0, -0.25, -0.25, 0.0, -0.25, -1.0, 0.0, -1.0, -0.5, 0.5, 0.0, 0.5, 0.0, -0.5, -1.0, -0.75, 0.75, -1.0, -1.0, -0.25, -0.75, 0.0, -0.5, 1.0, 0.0, -0.5, 0.75, -0.25, -0.75, 0.0, 1.0, -0.5, ]);
+    const device30 = await adapter3!.requestDevice({ label: "device30" });
+    
+    const adapter7 = await gpu.requestAdapter({
+        powerPreference: "low-power"
+    });
+    const command_encoder003 = device00.createCommandEncoder({ label: "command_encoder003" });
+    const sampler600 = device60.createSampler( { label: "sampler600" } );
+    render_bundle_encoder000.insertDebugMarker("marker");
+    var shader_module300_code = "";
+    try {
+        shader_module300_code = await fs.readFile(__dirname + '/shader_module300.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module300 = await device30.createShaderModule({ label: "shader_module300", code: shader_module300_code })
+    
+    const texture600 = device60.createTexture({
+        label: "texture600",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_DST,
+        format: "r32float",
+        dimension: "2d"
+    });
+    
+    var shader_module600_code = "";
+    try {
+        shader_module600_code = await fs.readFile(__dirname + '/shader_module600.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module600 = await device60.createShaderModule({ label: "shader_module600", code: shader_module600_code })
+    const device40 = await adapter4!.requestDevice({ label: "device40" });
+    const sampler601 = device60.createSampler( { label: "sampler601" } );
+    const texture601 = device60.createTexture({
+        label: "texture601",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_DST,
+        format: "r32float",
+        dimension: "2d"
+    });
+    buffer006.destroy()
+    
+    
+    device60.queue.writeTexture({ texture: texture601 }, array1, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    buffer008.destroy()
+    
+    command_encoder002.resolveQuerySet(
+        query000,
+        0,
+        32,
+        buffer001,
+        0
+    )
+    device60.queue.writeTexture({ texture: texture600 }, array0, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    var shader_module601_code = "";
+    try {
+        shader_module601_code = await fs.readFile(__dirname + '/shader_module601.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module601 = await device60.createShaderModule({ label: "shader_module601", code: shader_module601_code })
+    const render_pipeline001 = device00.createRenderPipeline({
+        label: "render_pipeline001",
+        vertex: {
+            module: shader_module006,
+            entryPoint: "vertex_main",
+            buffers: [
+                {
+                    attributes: [
+                        {
+                            shaderLocation: 0, // position
+                            offset: 0,
+                            format: "float32x4",
+                        },
+                        {
+                            shaderLocation: 1, // color
+                            offset: 16,
+                            format: "float32x4",
+                        },
+                    ],
+                    arrayStride: 32,
+                    stepMode: "vertex",
+                },
+            ],
+        },
+        fragment: {
+            module: shader_module006,
+            entryPoint: "fragment_main",
+            targets: [
+                {
+                    format: gpu.getPreferredCanvasFormat(),
+                },
+            ],
+        },
+        primitive: {
+            topology: "triangle-list",
+        },
+        layout: "auto"
+    });
+    texture600.destroy();
+    const command_encoder004 = device00.createCommandEncoder({ label: "command_encoder004" });
+    device60.queue.writeTexture({ texture: texture601 }, array1, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    
+    const render_bundle_encoder400 = device40.createRenderBundleEncoder({
+        label: "render_bundle_encoder400",
+        colorFormats: ["bgra8unorm"]
+    });
+    const texture003 = device00.createTexture({
+        label: "texture003",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_SRC,
+        format: "r32float",
+        dimension: "2d"
+    });
+    const query400 = device40.createQuerySet({
+        label: "query400",
+        type: "occlusion",
+        count: 32,
+    });
+    compute_pass_encoder0010.insertDebugMarker("marker")
+    
+    const render_bundle_encoder600 = device60.createRenderBundleEncoder({
+        label: "render_bundle_encoder600",
+        colorFormats: ["bgra8unorm"]
+    });
+    
+    
+    
+    device30.destroy();
+    
+    render_bundle_encoder002.setVertexBuffer(0, buffer000);
+    
+    
+    texture003.destroy();
+    const device70 = await adapter7!.requestDevice({ label: "device70" });
+    
+    
+    render_bundle_encoder400.insertDebugMarker("marker");
+    command_encoder002.resolveQuerySet(
+        query000,
+        0,
+        32,
+        buffer001,
+        0
+    )
+    const sampler003 = device00.createSampler( { label: "sampler003" } );
+    
+    
+    
+    buffer007.destroy()
+    const compute_pipeline001 = device00.createComputePipeline({
+        label: "compute_pipeline001",
+        layout: pipeline_layout001,
+        compute: {
+            module: shader_module005,
+            entryPoint: "main"
+        }
+    });
+    command_encoder004.insertDebugMarker("mymarker");
+    render_bundle_encoder002.popDebugGroup();
+    const query401 = device40.createQuerySet({
+        label: "query401",
+        type: "occlusion",
+        count: 32,
+    });
+    const command_buffer003 = command_encoder003.finish();
+    device40.destroy();
+    const compute_pipeline002 = device00.createComputePipeline({
+        label: "compute_pipeline002",
+        layout: pipeline_layout000,
+        compute: {
+            module: shader_module002,
+            entryPoint: "main"
+        }
+    });
+    const render_pipeline002 = device00.createRenderPipeline({
+        label: "render_pipeline002",
+        vertex: {
+            module: shader_module001,
+            entryPoint: "vertex_main",
+            buffers: [
+                {
+                    attributes: [
+                        {
+                            shaderLocation: 0, // position
+                            offset: 0,
+                            format: "float32x4",
+                        },
+                        {
+                            shaderLocation: 1, // color
+                            offset: 16,
+                            format: "float32x4",
+                        },
+                    ],
+                    arrayStride: 32,
+                    stepMode: "vertex",
+                },
+            ],
+        },
+        fragment: {
+            module: shader_module001,
+            entryPoint: "fragment_main",
+            targets: [
+                {
+                    format: gpu.getPreferredCanvasFormat(),
+                },
+            ],
+        },
+        primitive: {
+            topology: "triangle-list",
+        },
+        layout: "auto"
+    });
+    command_encoder004.pushDebugGroup("mygroupmarker")
+    device60.queue.writeTexture({ texture: texture601 }, array1, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    const query601 = device60.createQuerySet({
+        label: "query601",
+        type: "occlusion",
+        count: 32,
+    });
+    const sampler700 = device70.createSampler( { label: "sampler700" } );
+    const buffer600 = device60.createBuffer({
+        label: "buffer600",
+        size: 400,
+        usage: GPUBufferUsage.INDIRECT
+    });
+    const device10 = await adapter1!.requestDevice({ label: "device10" });
+    
+    
+    device70.destroy();
+    const compute_pipeline003 = device00.createComputePipeline({
+        label: "compute_pipeline003",
+        layout: pipeline_layout000,
+        compute: {
+            module: shader_module004,
+            entryPoint: "main"
+        }
+    });
+    compute_pass_encoder0000.setPipeline(compute_pipeline000);
+    
+    render_bundle_encoder002.draw(3);
+    render_bundle_encoder002.insertDebugMarker("marker");
+    
+    const command_encoder600 = device60.createCommandEncoder({ label: "command_encoder600" });
+    const compute_pass_encoder0040 = command_encoder004.beginComputePass({ label: "compute_pass_encoder0040" });
+    const texture602 = device60.createTexture({
+        label: "texture602",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_SRC,
+        format: "r32float",
+        dimension: "2d"
+    });
+    render_bundle_encoder000.insertDebugMarker("marker");
+    
+    
+    const buffer009 = device00.createBuffer({
+        label: "buffer009",
+        size: 400,
+        usage: GPUBufferUsage.UNIFORM
+    });
+
+    const buffer0010 = device00.createBuffer({
+        label: "buffer0010",
+        size: 400,
+        usage: GPUBufferUsage.STORAGE
+    });
+        
+    const bind_group003 = device00.createBindGroup({
+        label: "bind_group003",
+        layout: compute_pipeline000.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: {
+                    buffer: buffer009,
+                },
+            },
+            {
+                binding: 1,
+                resource: {
+                    buffer: buffer0010,
+                },
+            },
+        ],
+    });
+
+    compute_pass_encoder0000.setBindGroup(0, bind_group003);
+    const texture_view6020 = texture602.createView({ label: "texture_view6020" });
+    command_encoder600.pushDebugGroup("mygroupmarker")
+    const render_pass_encoder6000 = command_encoder600.beginRenderPass({
+        label: "render_pass_encoder6000",
+        colorAttachments: [
+            {
+                clearValue: [0.0, 0.5, 1.0, 1.0],
+                loadOp: "clear",
+                storeOp: "store",
+                view: texture_view6020,
+            },
+        ],
+        occlusionQuerySet: undefined
+    });
+    const command_encoder601 = device60.createCommandEncoder({ label: "command_encoder601" });
+    const compute_pipeline004 = device00.createComputePipeline({
+        label: "compute_pipeline004",
+        layout: pipeline_layout000,
+        compute: {
+            module: shader_module003,
+            entryPoint: "main"
+        }
+    });
+    
+    const buffer100 = device10.createBuffer({
+        label: "buffer100",
+        size: 400,
+        usage: GPUBufferUsage.QUERY_RESOLVE
+    });
+    
+    command_encoder002.pushDebugGroup("mygroupmarker")
+    query601.destroy()
+    const render_pipeline003 = device00.createRenderPipeline({
+        label: "render_pipeline003",
+        vertex: {
+            module: shader_module006,
+            entryPoint: "vertex_main",
+            buffers: [
+                {
+                    attributes: [
+                        {
+                            shaderLocation: 0, // position
+                            offset: 0,
+                            format: "float32x4",
+                        },
+                        {
+                            shaderLocation: 1, // color
+                            offset: 16,
+                            format: "float32x4",
+                        },
+                    ],
+                    arrayStride: 32,
+                    stepMode: "vertex",
+                },
+            ],
+        },
+        fragment: {
+            module: shader_module006,
+            entryPoint: "fragment_main",
+            targets: [
+                {
+                    format: gpu.getPreferredCanvasFormat(),
+                },
+            ],
+        },
+        primitive: {
+            topology: "triangle-list",
+        },
+        layout: "auto"
+    });
+    render_bundle_encoder001.pushDebugGroup("group_marker");
+    device10.pushErrorScope("out-of-memory");
+    command_encoder002.insertDebugMarker("mymarker");
+    
+    render_pass_encoder6000.executeBundles([])
+    render_bundle_encoder001.insertDebugMarker("marker");
+    buffer004.destroy()
+    command_encoder002.popDebugGroup()
+    buffer600.destroy()
+    var shader_module602_code = "";
+    try {
+        shader_module602_code = await fs.readFile(__dirname + '/render_shader.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module602 = await device60.createShaderModule({ label: "shader_module602", code: shader_module602_code })
+    compute_pass_encoder0000.popDebugGroup()
+    const texture603 = device60.createTexture({
+        label: "texture603",
+        size: [10, 10],
+        usage: GPUTextureUsage.STORAGE_BINDING,
+        format: "r32float",
+        dimension: "2d"
+    });
     const query001 = device00.createQuerySet({
         label: "query001",
         type: "occlusion",
         count: 32,
     });
     
-    device00.destroy();
-    
-    const array2 = new Float32Array([1.0, -0.5, 0.0, 0.25, 0.0, 0.25, 0.5, -0.25, 1.0, -0.25, 0.5, 1.0, 0.0, 1.0, 0.75, 0.75, -1.0, -0.5, -0.25, 0.5, -0.5, 0.75, 0.25, 0.0, 0.25, -1.0, -0.75, -1.0, 0.75, -0.75, 0.25, -0.75, 1.0, 0.75, 0.0, 1.0, 0.5, -1.0, 0.25, 0.0, -0.75, 0.5, 1.0, 0.5, 0.75, 0.5, 0.75, -0.5, 0.0, 0.25, 0.0, 1.0, 0.75, 0.75, -0.25, -1.0, 0.75, -0.25, 0.25, 0.75, 1.0, -0.75, 0.5, -0.25, 0.75, -1.0, -0.25, 0.5, -0.5, -0.75, 1.0, 0.75, -1.0, -0.25, 0.25, 1.0, 0.5, -0.25, -0.25, 0.5, -0.5, 0.25, -1.0, -0.75, 0.25, 0.0, 0.0, 1.0, 1.0, 0.0, 0.5, 0.25, 0.25, 0.5, 0.0, 1.0, 0.25, 1.0, 0.25, -0.5, ]);
-    const device10 = await adapter1!.requestDevice({ label: "device10" });
-    
-    const adapter3 = await gpu.requestAdapter({
-        powerPreference: undefined
-    });
-    device10.pushErrorScope("validation");
-    const sampler100 = device10.createSampler( { label: "sampler100" } );
-    const sampler101 = device10.createSampler( { label: "sampler101" } );
+    command_encoder601.pushDebugGroup("mygroupmarker")
+    const compute_pass_encoder0020 = command_encoder002.beginComputePass({ label: "compute_pass_encoder0020" });
+    compute_pass_encoder0010.setPipeline(compute_pipeline002);
+    compute_pass_encoder0040.setPipeline(compute_pipeline001);
     var shader_module100_code = "";
     try {
-        shader_module100_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
+        shader_module100_code = await fs.readFile(__dirname + '/shader_module100.wgsl', 'utf8');
     } catch (err) {
         console.log(err);
     }
     const shader_module100 = await device10.createShaderModule({ label: "shader_module100", code: shader_module100_code })
-    const sampler102 = device10.createSampler( { label: "sampler102" } );
-    
-    const device20 = await adapter2!.requestDevice({ label: "device20" });
-    const array3 = new Float32Array([-0.75, 0.25, -0.25, -0.75, -1.0, 0.75, -0.5, 0.5, 1.0, 0.0, -0.25, -0.75, 0.25, 0.5, 0.5, -0.5, 1.0, 0.0, -1.0, -1.0, 0.0, -0.5, 0.5, 0.0, -0.75, 0.25, 1.0, 0.75, -0.5, -0.5, -0.75, 0.75, 0.0, -1.0, 0.0, -0.25, -1.0, 0.75, 0.75, 0.0, -0.5, 0.0, -0.75, -0.25, 0.25, -0.25, 0.5, -0.75, 0.5, 0.0, 0.25, -0.75, 0.5, 0.75, -0.75, 1.0, 0.5, 0.0, 0.25, 1.0, -0.75, 0.75, 0.75, -0.5, -0.5, 0.75, 0.5, 0.25, 0.0, 1.0, 0.75, -0.25, -0.25, -0.25, 0.75, 0.25, -0.25, 0.5, 0.0, 0.0, -0.5, -0.25, -0.75, 0.0, 0.0, -0.5, -0.75, 1.0, 0.0, 1.0, 0.75, 0.0, 0.0, -0.5, 0.0, 0.25, 1.0, 0.75, 1.0, 1.0, ]);
-    
-    const buffer200 = device20.createBuffer({
-        label: "buffer200",
-        size: 400,
-        usage: GPUBufferUsage.INDIRECT
+    const array3 = new Float32Array([1.0, -0.25, -0.75, 0.75, -0.25, -0.75, -0.5, -0.5, -0.75, 1.0, -0.25, 0.25, 0.5, 1.0, -1.0, 0.0, -0.75, 0.0, 0.25, -0.75, 0.25, 0.0, 0.5, -0.25, 1.0, 0.75, -0.5, 1.0, 0.0, 0.75, 0.5, -1.0, 0.75, -1.0, 0.0, -0.5, -1.0, -0.5, 0.0, 0.75, -0.5, -0.25, -1.0, 1.0, -0.5, -0.5, 0.75, -0.25, 0.75, -0.5, 0.0, 0.75, 0.25, 0.75, 1.0, -0.25, 0.25, 0.25, -1.0, 0.25, -0.5, 0.75, -0.25, -0.75, -0.25, -0.25, -0.75, -1.0, 0.25, 0.25, -0.75, -0.5, -0.5, -1.0, -0.75, 0.75, 0.5, -0.25, -0.5, 0.25, -0.25, 0.0, 0.75, 1.0, 0.5, -0.5, -0.75, 1.0, -0.75, -0.25, 0.5, 0.25, 0.0, -0.75, -1.0, -0.75, -0.5, 0.25, -0.5, -0.5, ]);
+    device60.queue.writeTexture({ texture: texture601 }, array2, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    device10.popErrorScope().then((error) => {
+        if (error) {
+            console.error(`An error occurred: ${error.message}`);
+        }
     });
-    buffer200.destroy()
+    
+    compute_pass_encoder0000.insertDebugMarker("marker")
+    
+    const array4 = new Float32Array([0.75, 1.0, 0.75, -0.75, -1.0, 0.5, -1.0, 0.75, 0.25, 0.5, 1.0, 1.0, 0.0, -0.5, -1.0, 0.25, 0.75, 0.75, -0.5, -1.0, -1.0, 0.0, 0.5, -0.75, 0.5, -1.0, -0.25, 0.5, -0.5, 0.25, 0.5, 0.0, 0.25, 1.0, -0.75, 0.0, -1.0, 0.0, 0.5, -1.0, 0.0, -0.25, 0.5, 1.0, 1.0, 1.0, 0.0, 1.0, 0.75, -1.0, -0.5, 0.5, 0.5, 0.75, 0.5, 0.25, 0.5, -0.25, 1.0, -0.25, -1.0, -0.75, 1.0, 0.5, -0.25, 0.5, 1.0, 1.0, -1.0, -0.5, 0.5, -0.5, 0.0, 1.0, -1.0, -0.25, 0.75, -0.75, 1.0, 0.5, -0.25, -0.5, 0.5, 0.25, -0.25, -0.75, 1.0, -1.0, -0.25, 0.25, -0.25, 0.75, 0.25, 0.5, -0.5, 0.75, -0.25, 0.25, -1.0, 0.25, ]);
+    const query602 = device60.createQuerySet({
+        label: "query602",
+        type: "occlusion",
+        count: 32,
+    });
+    
+    const texture_view6010 = texture601.createView({ label: "texture_view6010" });
+    
+    const compute_pipeline005 = device00.createComputePipeline({
+        label: "compute_pipeline005",
+        layout: pipeline_layout000,
+        compute: {
+            module: shader_module005,
+            entryPoint: "main"
+        }
+    });
+    
+    
+    const texture604 = device60.createTexture({
+        label: "texture604",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_DST,
+        format: "r32float",
+        dimension: "2d"
+    });
     var shader_module101_code = "";
     try {
-        shader_module101_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module101.wgsl', 'utf8');
+        shader_module101_code = await fs.readFile(__dirname + '/render_shader.wgsl', 'utf8');
     } catch (err) {
         console.log(err);
     }
     const shader_module101 = await device10.createShaderModule({ label: "shader_module101", code: shader_module101_code })
+    compute_pass_encoder0040.pushDebugGroup("group_marker")
+    const texture605 = device60.createTexture({
+        label: "texture605",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_SRC,
+        format: "r32float",
+        dimension: "2d"
+    });
+    query000.destroy()
+    
+    
+    
+    const sampler100 = device10.createSampler( { label: "sampler100" } );
+    compute_pass_encoder0010.insertDebugMarker("marker")
+    const render_pass_encoder6010 = command_encoder601.beginRenderPass({
+        label: "render_pass_encoder6010",
+        colorAttachments: [
+            {
+                clearValue: [0.0, 0.5, 1.0, 1.0],
+                loadOp: "clear",
+                storeOp: "store",
+                view: texture_view6020,
+            },
+        ],
+        occlusionQuerySet: undefined
+    });
+    render_pass_encoder6000.setScissorRect(0, 0, texture602.width / 2, texture602.height / 2);
+    var shader_module603_code = "";
+    try {
+        shader_module603_code = await fs.readFile(__dirname + '/shader_module603.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module603 = await device60.createShaderModule({ label: "shader_module603", code: shader_module603_code })
+    const buffer0011 = device00.createBuffer({
+        label: "buffer0011",
+        size: 400,
+        usage: GPUBufferUsage.INDEX
+    });
+    buffer100.destroy()
+    const array5 = new Float32Array([0.75, 0.25, 0.25, -0.5, -0.25, -0.5, 0.5, -0.25, -0.75, -0.75, -0.5, -0.5, 0.5, 0.5, 1.0, 0.0, 0.25, -0.75, -0.5, 0.5, -0.75, -0.5, 0.75, 1.0, -0.75, -0.5, 0.25, -0.75, 0.0, -0.5, -1.0, 1.0, 0.75, -0.75, -0.75, -0.75, -0.75, -0.75, -0.75, 1.0, -0.5, 0.25, -0.25, 0.5, 1.0, -0.75, 0.0, 0.75, 1.0, 0.75, 0.5, 1.0, 0.5, 0.25, 1.0, 0.5, 0.25, -1.0, 0.25, -1.0, -1.0, 0.75, 0.75, -1.0, 0.0, 1.0, -0.5, -0.75, -0.75, -0.75, -1.0, -0.25, -0.25, 0.75, 1.0, 0.0, -0.25, 0.5, -0.25, -0.25, -0.75, 0.5, 0.25, 0.0, 0.0, 1.0, -0.5, -0.5, 0.5, -0.5, 0.5, 0.0, -0.5, 0.0, -0.5, 0.75, -0.75, 1.0, 0.75, 0.75, ]);
+    
+    const compute_pipeline006 = device00.createComputePipeline({
+        label: "compute_pipeline006",
+        layout: pipeline_layout001,
+        compute: {
+            module: shader_module003,
+            entryPoint: "main"
+        }
+    });
+    render_bundle_encoder002.insertDebugMarker("marker");
+    render_bundle_encoder002.finish();
+    
+    texture603.destroy();
+    const command_encoder005 = device00.createCommandEncoder({ label: "command_encoder005" });
+    
+    
+    
+    
+    const array6 = new Float32Array([0.5, 0.75, 0.5, -1.0, -0.25, -0.25, -0.75, 0.0, -0.5, -0.5, 0.25, 0.75, -0.25, -0.75, -0.5, 0.0, 0.75, -0.5, 0.75, 0.5, 0.5, 1.0, 0.0, 1.0, 0.25, 0.5, -1.0, -0.25, 0.0, 1.0, 0.0, 0.5, 0.5, 1.0, -0.5, 0.5, 0.75, 1.0, -0.5, 0.0, -0.25, -0.5, -0.25, 0.5, -1.0, 0.75, 0.5, 0.25, -0.5, -0.5, -0.75, 0.25, -0.75, 0.5, 0.0, -1.0, 0.25, 0.5, 0.0, 0.75, -1.0, 0.25, 0.25, -1.0, -1.0, 1.0, 0.75, 0.25, 0.5, -0.75, -0.5, -0.5, -0.5, -0.5, -0.5, 0.0, -1.0, 0.5, 0.0, -0.25, -0.25, -0.25, 0.25, -1.0, 0.75, -0.75, 0.25, 0.25, 0.75, 0.75, 0.25, -1.0, 0.25, 0.0, -0.5, 0.25, 0.75, 1.0, -0.75, -0.25, ]);
+    const sampler004 = device00.createSampler( { label: "sampler004" } );
+    var shader_module604_code = "";
+    try {
+        shader_module604_code = await fs.readFile(__dirname + '/shader_module604.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module604 = await device60.createShaderModule({ label: "shader_module604", code: shader_module604_code })
+    render_pass_encoder6010.setBlendConstant([1.0, 0.0, 0.0, 1.0]);
     const texture100 = device10.createTexture({
         label: "texture100",
         size: [10, 10],
         usage: GPUTextureUsage.COPY_DST,
-        format: "rgba8unorm",
+        format: "r32float",
         dimension: "2d"
     });
+    buffer009.destroy()
     
-    var shader_module102_code = "";
-    try {
-        shader_module102_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module102.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module102 = await device10.createShaderModule({ label: "shader_module102", code: shader_module102_code })
-    const command_encoder100 = device10.createCommandEncoder({ label: "command_encoder100" });
+    compute_pass_encoder0020.setPipeline(compute_pipeline003);
+    render_pass_encoder6010.insertDebugMarker("marker");
     
-    const query200 = device20.createQuerySet({
-        label: "query200",
+    const uint32_0000 = new Uint32Array(3);
+
+    uint32_0000[0] = 100;
+    uint32_0000[1] = 1;
+    uint32_0000[2] = 1;
+
+    const buffer0012 = device00.createBuffer({
+        label: "buffer0012",
+        size: 400,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT,
+    });
+    device00.queue.writeBuffer(buffer0012, 0, uint32_0000, 0, uint32_0000.length);
+
+    compute_pass_encoder0000.dispatchWorkgroupsIndirect(buffer0012, 0);
+    device60.queue.writeTexture({ texture: texture604 }, array4, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    const command_buffer005 = command_encoder005.finish();
+    const buffer0013 = device00.createBuffer({
+        label: "buffer0013",
+        size: 400,
+        usage: GPUBufferUsage.UNIFORM
+    });
+
+    const buffer0014 = device00.createBuffer({
+        label: "buffer0014",
+        size: 400,
+        usage: GPUBufferUsage.STORAGE
+    });
+        
+    const bind_group004 = device00.createBindGroup({
+        label: "bind_group004",
+        layout: compute_pipeline002.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: {
+                    buffer: buffer0013,
+                },
+            },
+            {
+                binding: 1,
+                resource: {
+                    buffer: buffer0014,
+                },
+            },
+        ],
+    });
+
+    compute_pass_encoder0010.setBindGroup(0, bind_group004);
+    texture605.destroy();
+    
+    
+    
+    
+    
+    device10.destroy();
+    buffer0014.destroy()
+    render_pass_encoder6010.pushDebugGroup("group_marker");
+    const command_encoder602 = device60.createCommandEncoder({ label: "command_encoder602" });
+    render_bundle_encoder600.insertDebugMarker("marker");
+    
+    render_bundle_encoder001.setIndexBuffer(buffer0011, "uint16");
+    const render_pass_encoder6020 = command_encoder602.beginRenderPass({
+        label: "render_pass_encoder6020",
+        colorAttachments: [
+            {
+                clearValue: [0.0, 0.5, 1.0, 1.0],
+                loadOp: "clear",
+                storeOp: "store",
+                view: texture_view6010,
+            },
+        ],
+        occlusionQuerySet: query602
+    });
+    render_pass_encoder6020.setBlendConstant([1.0, 0.0, 0.0, 1.0]);
+    const query603 = device60.createQuerySet({
+        label: "query603",
         type: "occlusion",
         count: 32,
     });
     
-    const bind_group_layout200 = device20.createBindGroupLayout({ 
-        label: "bind_group_layout200",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    var shader_module200_code = "";
+    render_pass_encoder6010.setBlendConstant([1.0, 0.0, 0.0, 1.0]);
+    render_bundle_encoder600.pushDebugGroup("group_marker");
+    device60.queue.writeTexture({ texture: texture604 }, array5, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    device60.queue.writeTexture({ texture: texture604 }, array4, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    var shader_module605_code = "";
     try {
-        shader_module200_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
+        shader_module605_code = await fs.readFile(__dirname + '/shader_module605.wgsl', 'utf8');
     } catch (err) {
         console.log(err);
     }
-    const shader_module200 = await device20.createShaderModule({ label: "shader_module200", code: shader_module200_code })
+    const shader_module605 = await device60.createShaderModule({ label: "shader_module605", code: shader_module605_code })
+    render_pass_encoder6010.setScissorRect(0, 0, texture602.width / 2, texture602.height / 2);
+    render_bundle_encoder001.setIndexBuffer(buffer0011, "uint16");
     
-    const array4 = new Float32Array([0.0, 0.5, 1.0, 0.5, -0.5, 0.0, 0.5, 0.75, -1.0, -1.0, 0.75, 1.0, -0.5, 0.75, -0.5, 0.5, -0.5, -0.25, -0.25, 0.0, 1.0, 0.0, 0.75, 0.25, 0.25, 0.5, 0.75, -0.25, -1.0, -0.5, 0.75, 0.5, -0.5, -0.25, -1.0, 1.0, 1.0, -0.25, 0.5, -1.0, 0.0, 0.75, 1.0, 0.5, 0.5, -0.25, -0.75, 0.5, -0.5, -1.0, 0.5, -0.25, -0.5, 1.0, -0.25, 0.25, -0.75, 0.0, 0.75, -0.5, 0.25, -1.0, -0.5, 0.0, -0.75, 0.5, -0.25, 0.5, 0.0, 0.75, -0.5, -0.25, -0.75, 0.0, 0.0, 0.25, 0.75, -0.5, 0.0, -0.75, -1.0, -0.5, -1.0, -0.75, 0.25, 0.25, 0.0, -0.5, -0.25, -1.0, 0.5, -0.25, 0.75, -0.5, -0.75, 0.0, -1.0, 1.0, -0.75, -1.0, ]);
-    
-    const texture200 = device20.createTexture({
-        label: "texture200",
-        size: [10, 10],
-        usage: GPUTextureUsage.STORAGE_BINDING,
-        format: "r8unorm",
-        dimension: "2d"
-    });
-    const device30 = await adapter3!.requestDevice({ label: "device30" });
-    
-    var shader_module103_code = "";
-    try {
-        shader_module103_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module103 = await device10.createShaderModule({ label: "shader_module103", code: shader_module103_code })
-    
-    command_encoder100.pushDebugGroup("mygroupmarker")
-    const bind_group_layout300 = device30.createBindGroupLayout({ 
-        label: "bind_group_layout300",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    const texture_view1000 = texture100.createView({ label: "texture_view1000" });
-    
-    var shader_module300_code = "";
-    try {
-        shader_module300_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module300 = await device30.createShaderModule({ label: "shader_module300", code: shader_module300_code })
-    const sampler103 = device10.createSampler( { label: "sampler103" } );
-    command_encoder100.popDebugGroup()
-    texture100.destroy();
-    
-    const render_pipeline200 = device20.createRenderPipeline({
-        label: "render_pipeline200",
-        vertex: {
-            module: shader_module200,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module200,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    
-    const render_pipeline300 = device30.createRenderPipeline({
-        label: "render_pipeline300",
-        vertex: {
-            module: shader_module300,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module300,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    
-    const render_pipeline201 = device20.createRenderPipeline({
-        label: "render_pipeline201",
-        vertex: {
-            module: shader_module200,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module200,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    const command_buffer100 = command_encoder100.finish();
-    const texture201 = device20.createTexture({
-        label: "texture201",
-        size: [10, 10],
-        usage: GPUTextureUsage.COPY_DST,
-        format: "r32float",
-        dimension: "2d"
-    });
-    const texture202 = device20.createTexture({
-        label: "texture202",
-        size: [10, 10],
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        format: "rgba8uint",
-        dimension: "2d"
-    });
-    const bind_group_layout201 = device20.createBindGroupLayout({ 
-        label: "bind_group_layout201",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    
-    
-    
-    device30.pushErrorScope("validation");
-    const pipeline_layout200 = device20.createPipelineLayout({ 
-        label: "pipeline_layout200",
-        bindGroupLayouts: [bind_group_layout201]
-    });
-    const texture_view2010 = texture201.createView({ label: "texture_view2010" });
-    var shader_module104_code = "";
-    try {
-        shader_module104_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module104 = await device10.createShaderModule({ label: "shader_module104", code: shader_module104_code })
-    
-    const render_pipeline100 = device10.createRenderPipeline({
-        label: "render_pipeline100",
-        vertex: {
-            module: shader_module104,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module104,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    
-    const texture_view2011 = texture201.createView({ label: "texture_view2011" });
-    const buffer300 = device30.createBuffer({
-        label: "buffer300",
+    compute_pass_encoder0010.insertDebugMarker("marker")
+    device60.queue.writeTexture({ texture: texture601 }, array1, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    const buffer0015 = device00.createBuffer({
+        label: "buffer0015",
         size: 400,
         usage: GPUBufferUsage.QUERY_RESOLVE
     });
-    device20.queue.writeTexture({ texture: texture201 }, array0, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    const pipeline_layout300 = device30.createPipelineLayout({ 
-        label: "pipeline_layout300",
-        bindGroupLayouts: [bind_group_layout300]
-    });
+    device00.queue.writeBuffer(buffer0012, 0, array5, 0, array5.length);
     
     
-    const buffer100 = device10.createBuffer({
-        label: "buffer100",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-    var shader_module105_code = "";
-    try {
-        shader_module105_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module105.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module105 = await device10.createShaderModule({ label: "shader_module105", code: shader_module105_code })
-    device20.pushErrorScope("internal");
-    device10.queue.submit([command_buffer100, ]);
-    const pipeline_layout201 = device20.createPipelineLayout({ 
-        label: "pipeline_layout201",
-        bindGroupLayouts: [bind_group_layout200]
-    });
-    const texture_view2012 = texture201.createView({ label: "texture_view2012" });
-    const render_pipeline101 = device10.createRenderPipeline({
-        label: "render_pipeline101",
+    const texture_view6011 = texture601.createView({ label: "texture_view6011" });
+    device60.queue.writeTexture({ texture: texture604 }, array1, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    compute_pass_encoder0040.popDebugGroup()
+    const sampler602 = device60.createSampler( { label: "sampler602" } );
+    
+    render_bundle_encoder600.popDebugGroup();
+    
+    const render_pipeline600 = device60.createRenderPipeline({
+        label: "render_pipeline600",
         vertex: {
-            module: shader_module100,
+            module: shader_module602,
             entryPoint: "vertex_main",
             buffers: [
                 {
@@ -456,7 +1086,7 @@ async function main(gpu: GPU) {
             ],
         },
         fragment: {
-            module: shader_module100,
+            module: shader_module602,
             entryPoint: "fragment_main",
             targets: [
                 {
@@ -469,1807 +1099,125 @@ async function main(gpu: GPU) {
         },
         layout: "auto"
     });
-    
-    
-    
-    
-    buffer100.destroy()
-    const sampler300 = device30.createSampler( { label: "sampler300" } );
-    const bind_group_layout301 = device30.createBindGroupLayout({ 
-        label: "bind_group_layout301",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    const sampler200 = device20.createSampler( { label: "sampler200" } );
-    
-    const bind_group_layout302 = device30.createBindGroupLayout({ 
-        label: "bind_group_layout302",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    const texture_view2013 = texture201.createView({ label: "texture_view2013" });
-    var shader_module201_code = "";
-    try {
-        shader_module201_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module201.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module201 = await device20.createShaderModule({ label: "shader_module201", code: shader_module201_code })
-    
-    const pipeline_layout301 = device30.createPipelineLayout({ 
-        label: "pipeline_layout301",
-        bindGroupLayouts: [bind_group_layout302]
-    });
-    const render_bundle_encoder300 = device30.createRenderBundleEncoder({
-        label: "render_bundle_encoder300",
-        colorFormats: ["bgra8unorm"]
-    });
-    const texture_view2014 = texture201.createView({ label: "texture_view2014" });
-    const texture101 = device10.createTexture({
-        label: "texture101",
+    query601.destroy()
+    const texture606 = device60.createTexture({
+        label: "texture606",
         size: [10, 10],
-        usage: GPUTextureUsage.STORAGE_BINDING,
-        format: "rgba8snorm",
+        usage: GPUTextureUsage.COPY_DST,
+        format: "r16uint",
         dimension: "2d"
     });
-    const query201 = device20.createQuerySet({
-        label: "query201",
+    
+    render_bundle_encoder001.drawIndexed(3);
+    const query002 = device00.createQuerySet({
+        label: "query002",
         type: "occlusion",
         count: 32,
     });
-    
-    const bind_group_layout202 = device20.createBindGroupLayout({ 
-        label: "bind_group_layout202",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    var shader_module301_code = "";
-    try {
-        shader_module301_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module301.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module301 = await device30.createShaderModule({ label: "shader_module301", code: shader_module301_code })
-    const pipeline_layout302 = device30.createPipelineLayout({ 
-        label: "pipeline_layout302",
-        bindGroupLayouts: [bind_group_layout302]
-    });
-    
-    const pipeline_layout202 = device20.createPipelineLayout({ 
-        label: "pipeline_layout202",
-        bindGroupLayouts: [bind_group_layout200]
-    });
-    const pipeline_layout303 = device30.createPipelineLayout({ 
-        label: "pipeline_layout303",
-        bindGroupLayouts: [bind_group_layout300]
-    });
-    var shader_module202_code = "";
-    try {
-        shader_module202_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module202 = await device20.createShaderModule({ label: "shader_module202", code: shader_module202_code })
-    const texture_view1010 = texture101.createView({ label: "texture_view1010" });
-    const command_encoder101 = device10.createCommandEncoder({ label: "command_encoder101" });
-    query201.destroy()
-    
-    const buffer301 = device30.createBuffer({
-        label: "buffer301",
-        size: 400,
-        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE
-    });
-    device20.queue.writeTexture({ texture: texture201 }, array3, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    
-    
-    render_bundle_encoder300.setPipeline(render_pipeline300);
-    const pipeline_layout304 = device30.createPipelineLayout({ 
-        label: "pipeline_layout304",
-        bindGroupLayouts: [bind_group_layout300]
-    });
-    const sampler104 = device10.createSampler( { label: "sampler104" } );
-    render_bundle_encoder300.pushDebugGroup("group_marker");
-    const compute_pipeline200 = device20.createComputePipeline({
-        label: "compute_pipeline200",
-        layout: pipeline_layout200,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    const render_pipeline102 = device10.createRenderPipeline({
-        label: "render_pipeline102",
-        vertex: {
-            module: shader_module104,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module104,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    
-    const texture_view2020 = texture202.createView({ label: "texture_view2020" });
-    const compute_pipeline300 = device30.createComputePipeline({
-        label: "compute_pipeline300",
-        layout: pipeline_layout302,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const pipeline_layout203 = device20.createPipelineLayout({ 
-        label: "pipeline_layout203",
-        bindGroupLayouts: [bind_group_layout201]
-    });
-    
-    const texture_view2000 = texture200.createView({ label: "texture_view2000" });
-    
-    const render_bundle_encoder301 = device30.createRenderBundleEncoder({
-        label: "render_bundle_encoder301",
-        colorFormats: ["bgra8unorm"]
-    });
-    const adapter4 = await gpu.requestAdapter({
-        powerPreference: undefined
-    });
-    const command_buffer101 = command_encoder101.finish();
-    const command_encoder200 = device20.createCommandEncoder({ label: "command_encoder200" });
-    command_encoder200.insertDebugMarker("mymarker");
-    const render_pipeline202 = device20.createRenderPipeline({
-        label: "render_pipeline202",
-        vertex: {
-            module: shader_module202,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module202,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    device10.popErrorScope().then((error) => {
-        if (error) {
-            console.error(`An error occurred: ${error.message}`);
-        }
-    });
-    const render_bundle_encoder302 = device30.createRenderBundleEncoder({
-        label: "render_bundle_encoder302",
-        colorFormats: ["bgra8unorm"]
-    });
-    const compute_pipeline301 = device30.createComputePipeline({
-        label: "compute_pipeline301",
-        layout: pipeline_layout301,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    device20.queue.writeTexture({ texture: texture201 }, array2, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    
-    
-    const command_encoder300 = device30.createCommandEncoder({ label: "command_encoder300" });
-    const compute_pipeline201 = device20.createComputePipeline({
-        label: "compute_pipeline201",
-        layout: pipeline_layout203,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    const texture_view2001 = texture200.createView({ label: "texture_view2001" });
-    
-    const pipeline_layout305 = device30.createPipelineLayout({ 
-        label: "pipeline_layout305",
-        bindGroupLayouts: [bind_group_layout302]
-    });
-    const texture_view2021 = texture202.createView({ label: "texture_view2021" });
-    const compute_pipeline202 = device20.createComputePipeline({
-        label: "compute_pipeline202",
-        layout: pipeline_layout202,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    texture202.destroy();
-    const render_pass_encoder2000 = command_encoder200.beginRenderPass({
-        label: "render_pass_encoder2000",
-        colorAttachments: [
-            {
-                clearValue: [0.0, 0.5, 1.0, 1.0],
-                loadOp: "clear",
-                storeOp: "store",
-                view: texture_view2013,
-            },
-        ],
-        occlusionQuerySet: query200
-    });
-    render_pass_encoder2000.setStencilReference(1);
-    device20.queue.writeTexture({ texture: texture201 }, array3, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    
-    
-    const compute_pipeline302 = device30.createComputePipeline({
-        label: "compute_pipeline302",
-        layout: pipeline_layout302,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2000.setScissorRect(0, 0, texture201.width / 2, texture201.height / 2);
-    render_pass_encoder2000.setPipeline(render_pipeline200);
-    
-    const compute_pipeline303 = device30.createComputePipeline({
-        label: "compute_pipeline303",
-        layout: pipeline_layout301,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    texture200.destroy();
-    const command_encoder201 = device20.createCommandEncoder({ label: "command_encoder201" });
-    var shader_module106_code = "";
-    try {
-        shader_module106_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module106.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module106 = await device10.createShaderModule({ label: "shader_module106", code: shader_module106_code })
-    const render_pass_encoder2010 = command_encoder201.beginRenderPass({
-        label: "render_pass_encoder2010",
-        colorAttachments: [
-            {
-                clearValue: [0.0, 0.5, 1.0, 1.0],
-                loadOp: "clear",
-                storeOp: "store",
-                view: texture_view2014,
-            },
-        ],
-        occlusionQuerySet: query200
-    });
-    
-    
-    const pipeline_layout306 = device30.createPipelineLayout({ 
-        label: "pipeline_layout306",
-        bindGroupLayouts: [bind_group_layout300]
-    });
-    var shader_module302_code = "";
-    try {
-        shader_module302_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module302.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module302 = await device30.createShaderModule({ label: "shader_module302", code: shader_module302_code })
-    render_pass_encoder2000.insertDebugMarker("marker");
-    const render_pipeline103 = device10.createRenderPipeline({
-        label: "render_pipeline103",
-        vertex: {
-            module: shader_module103,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module103,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    const buffer201 = device20.createBuffer({
-        label: "buffer201",
-        size: 400,
-        usage: GPUBufferUsage.VERTEX
-    });
-    
-    
-    query200.destroy()
-    render_pass_encoder2000.setScissorRect(0, 0, texture201.width / 2, texture201.height / 2);
-    device20.queue.writeTexture({ texture: texture201 }, array4, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    device20.queue.writeTexture({ texture: texture201 }, array1, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    render_pass_encoder2010.insertDebugMarker("marker");
-    command_encoder300.insertDebugMarker("mymarker");
-    const pipeline_layout204 = device20.createPipelineLayout({ 
-        label: "pipeline_layout204",
-        bindGroupLayouts: [bind_group_layout201]
-    });
-    const compute_pipeline304 = device30.createComputePipeline({
-        label: "compute_pipeline304",
-        layout: pipeline_layout305,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    
-    
-    render_pass_encoder2010.setPipeline(render_pipeline202);
-    const compute_pipeline203 = device20.createComputePipeline({
-        label: "compute_pipeline203",
-        layout: pipeline_layout201,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    device20.queue.writeTexture({ texture: texture201 }, array1, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    const compute_pipeline305 = device30.createComputePipeline({
-        label: "compute_pipeline305",
-        layout: pipeline_layout301,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline204 = device20.createComputePipeline({
-        label: "compute_pipeline204",
-        layout: pipeline_layout201,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    buffer301.destroy()
-    const buffer101 = device10.createBuffer({
-        label: "buffer101",
-        size: 400,
-        usage: GPUBufferUsage.INDIRECT
-    });
-    const texture203 = device20.createTexture({
-        label: "texture203",
-        size: [10, 10],
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        format: "r32float",
-        dimension: "2d"
-    });
-    const bind_group_layout303 = device30.createBindGroupLayout({ 
-        label: "bind_group_layout303",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    render_pass_encoder2000.setBlendConstant([1.0, 0.0, 0.0, 1.0]);
-    texture203.destroy();
-    const compute_pipeline306 = device30.createComputePipeline({
-        label: "compute_pipeline306",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    
-    device10.pushErrorScope("validation");
-    const compute_pipeline307 = device30.createComputePipeline({
-        label: "compute_pipeline307",
-        layout: pipeline_layout306,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    
-    const compute_pipeline308 = device30.createComputePipeline({
-        label: "compute_pipeline308",
-        layout: pipeline_layout305,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    
-    const render_pipeline104 = device10.createRenderPipeline({
-        label: "render_pipeline104",
-        vertex: {
-            module: shader_module103,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module103,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    const buffer202 = device20.createBuffer({
-        label: "buffer202",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer203 = device20.createBuffer({
-        label: "buffer203",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
-    
-    const bind_group200 = device20.createBindGroup({
-        label: "bind_group200",
-        layout: render_pipeline202.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer202,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer203,
-                },
-            },
-        ],
-    });
-
-    render_pass_encoder2010.setBindGroup(0, bind_group200);
-    render_pass_encoder2010.setStencilReference(1);
-    const pipeline_layout205 = device20.createPipelineLayout({ 
-        label: "pipeline_layout205",
-        bindGroupLayouts: [bind_group_layout200]
-    });
-    const texture_view1011 = texture101.createView({ label: "texture_view1011" });
-    
-    render_bundle_encoder300.popDebugGroup();
-    device20.popErrorScope().then((error) => {
-        if (error) {
-            console.error(`An error occurred: ${error.message}`);
-        }
-    });
-    var shader_module203_code = "";
-    try {
-        shader_module203_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module203 = await device20.createShaderModule({ label: "shader_module203", code: shader_module203_code })
-    const bind_group_layout100 = device10.createBindGroupLayout({ 
-        label: "bind_group_layout100",
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "uniform",
-                },
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: "storage",
-                }
-            }
-        ]
-    });
-    
-    
-    const compute_pipeline309 = device30.createComputePipeline({
-        label: "compute_pipeline309",
-        layout: pipeline_layout302,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    render_bundle_encoder301.pushDebugGroup("group_marker");
-    const compute_pipeline3010 = device30.createComputePipeline({
-        label: "compute_pipeline3010",
-        layout: pipeline_layout300,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    var shader_module303_code = "";
-    try {
-        shader_module303_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module303 = await device30.createShaderModule({ label: "shader_module303", code: shader_module303_code })
-    const render_pipeline203 = device20.createRenderPipeline({
-        label: "render_pipeline203",
-        vertex: {
-            module: shader_module202,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module202,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    
-    const pipeline_layout206 = device20.createPipelineLayout({ 
-        label: "pipeline_layout206",
-        bindGroupLayouts: [bind_group_layout200]
-    });
-    
-    
-    const compute_pipeline3011 = device30.createComputePipeline({
-        label: "compute_pipeline3011",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    
-    
-    render_bundle_encoder302.pushDebugGroup("group_marker");
-    const buffer302 = device30.createBuffer({
-        label: "buffer302",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer303 = device30.createBuffer({
-        label: "buffer303",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
-    
-    const bind_group300 = device30.createBindGroup({
-        label: "bind_group300",
-        layout: render_pipeline300.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer302,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer303,
-                },
-            },
-        ],
-    });
-
-    render_bundle_encoder300.setBindGroup(0, bind_group300);
-    const pipeline_layout207 = device20.createPipelineLayout({ 
-        label: "pipeline_layout207",
-        bindGroupLayouts: [bind_group_layout202]
-    });
-    device10.popErrorScope().then((error) => {
-        if (error) {
-            console.error(`An error occurred: ${error.message}`);
-        }
-    });
-    const compute_pipeline3012 = device30.createComputePipeline({
-        label: "compute_pipeline3012",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    buffer101.destroy()
-    var shader_module107_code = "";
-    try {
-        shader_module107_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module107.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module107 = await device10.createShaderModule({ label: "shader_module107", code: shader_module107_code })
-    const compute_pipeline3013 = device30.createComputePipeline({
-        label: "compute_pipeline3013",
-        layout: pipeline_layout301,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    
-    var shader_module204_code = "";
-    try {
-        shader_module204_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module204 = await device20.createShaderModule({ label: "shader_module204", code: shader_module204_code })
-    const compute_pipeline3014 = device30.createComputePipeline({
-        label: "compute_pipeline3014",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2000.insertDebugMarker("marker");
-    const compute_pipeline205 = device20.createComputePipeline({
-        label: "compute_pipeline205",
-        layout: pipeline_layout204,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2010.setViewport(0, 0, texture201.width / 2, texture201.height / 2, 0, 1);
-    const render_pipeline301 = device30.createRenderPipeline({
-        label: "render_pipeline301",
-        vertex: {
-            module: shader_module303,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module303,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    
-    
-    
-    const command_encoder301 = device30.createCommandEncoder({ label: "command_encoder301" });
-    const pipeline_layout307 = device30.createPipelineLayout({ 
-        label: "pipeline_layout307",
-        bindGroupLayouts: [bind_group_layout303]
-    });
-    const pipeline_layout308 = device30.createPipelineLayout({ 
-        label: "pipeline_layout308",
-        bindGroupLayouts: [bind_group_layout303]
-    });
-    
-    render_bundle_encoder301.setPipeline(render_pipeline301);
-    const command_encoder102 = device10.createCommandEncoder({ label: "command_encoder102" });
-    render_pass_encoder2010.setVertexBuffer(0, buffer201);
-    
-    
-    const compute_pass_encoder1020 = command_encoder102.beginComputePass({ label: "compute_pass_encoder1020" });
-    const compute_pipeline3015 = device30.createComputePipeline({
-        label: "compute_pipeline3015",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3016 = device30.createComputePipeline({
-        label: "compute_pipeline3016",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    command_encoder300.pushDebugGroup("mygroupmarker")
-    
-    const compute_pipeline3017 = device30.createComputePipeline({
-        label: "compute_pipeline3017",
-        layout: pipeline_layout307,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const buffer204 = device20.createBuffer({
-        label: "buffer204",
-        size: 400,
-        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE
-    });
-    const compute_pipeline206 = device20.createComputePipeline({
-        label: "compute_pipeline206",
-        layout: pipeline_layout200,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2010.pushDebugGroup("group_marker");
-    const compute_pipeline207 = device20.createComputePipeline({
-        label: "compute_pipeline207",
-        layout: pipeline_layout200,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    compute_pass_encoder1020.insertDebugMarker("marker")
-    device20.pushErrorScope("out-of-memory");
-    
-    const sampler301 = device30.createSampler( { label: "sampler301" } );
-    var shader_module108_code = "";
-    try {
-        shader_module108_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module108 = await device10.createShaderModule({ label: "shader_module108", code: shader_module108_code })
-    const device40 = await adapter4!.requestDevice({ label: "device40" });
-    const pipeline_layout309 = device30.createPipelineLayout({ 
-        label: "pipeline_layout309",
-        bindGroupLayouts: [bind_group_layout300]
-    });
-    render_pass_encoder2000.setStencilReference(1);
-    
-    const render_pipeline302 = device30.createRenderPipeline({
-        label: "render_pipeline302",
-        vertex: {
-            module: shader_module303,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module303,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    const compute_pass_encoder3000 = command_encoder300.beginComputePass({ label: "compute_pass_encoder3000" });
-    const buffer205 = device20.createBuffer({
-        label: "buffer205",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer206 = device20.createBuffer({
-        label: "buffer206",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
-    
-    const bind_group201 = device20.createBindGroup({
-        label: "bind_group201",
-        layout: render_pipeline200.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer205,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer206,
-                },
-            },
-        ],
-    });
-
-    render_pass_encoder2000.setBindGroup(0, bind_group201);
-    const compute_pipeline208 = device20.createComputePipeline({
-        label: "compute_pipeline208",
-        layout: pipeline_layout201,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    device40.destroy();
-    
-    render_bundle_encoder302.popDebugGroup();
-    render_pass_encoder2010.popDebugGroup();
-    buffer206.destroy()
-    const adapter5 = await gpu.requestAdapter({
-        powerPreference: undefined
-    });
-    buffer300.destroy()
-    device20.queue.writeTexture({ texture: texture201 }, array3, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
-    compute_pass_encoder3000.pushDebugGroup("group_marker")
-    render_pass_encoder2010.setViewport(0, 0, texture201.width / 2, texture201.height / 2, 0, 1);
-    render_pass_encoder2010.draw(3);
-    command_encoder301.pushDebugGroup("mygroupmarker")
-    const query300 = device30.createQuerySet({
-        label: "query300",
-        type: "occlusion",
-        count: 32,
-    });
-    const render_pipeline204 = device20.createRenderPipeline({
-        label: "render_pipeline204",
-        vertex: {
-            module: shader_module203,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module203,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    command_encoder301.insertDebugMarker("mymarker");
-    
-    var shader_module109_code = "";
-    try {
-        shader_module109_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module109 = await device10.createShaderModule({ label: "shader_module109", code: shader_module109_code })
-    
-    const compute_pipeline3018 = device30.createComputePipeline({
-        label: "compute_pipeline3018",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3019 = device30.createComputePipeline({
-        label: "compute_pipeline3019",
-        layout: pipeline_layout307,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2010.setStencilReference(1);
-    render_bundle_encoder302.setPipeline(render_pipeline300);
-    render_bundle_encoder300.pushDebugGroup("group_marker");
-    
-    texture201.destroy();
-    const compute_pipeline209 = device20.createComputePipeline({
-        label: "compute_pipeline209",
-        layout: pipeline_layout205,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2010.setStencilReference(1);
-    
-    
-    compute_pass_encoder3000.setPipeline(compute_pipeline308);
-    
-    var shader_module1010_code = "";
-    try {
-        shader_module1010_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module1010 = await device10.createShaderModule({ label: "shader_module1010", code: shader_module1010_code })
-    const compute_pipeline3020 = device30.createComputePipeline({
-        label: "compute_pipeline3020",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const render_pipeline205 = device20.createRenderPipeline({
-        label: "render_pipeline205",
-        vertex: {
-            module: shader_module200,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module200,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    const render_bundle_encoder200 = device20.createRenderBundleEncoder({
-        label: "render_bundle_encoder200",
-        colorFormats: ["bgra8unorm"]
-    });
-    const compute_pipeline3021 = device30.createComputePipeline({
-        label: "compute_pipeline3021",
-        layout: pipeline_layout309,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    
-    render_pass_encoder2010.setScissorRect(0, 0, texture201.width / 2, texture201.height / 2);
-    const device50 = await adapter5!.requestDevice({ label: "device50" });
-    render_bundle_encoder200.pushDebugGroup("group_marker");
-    
-    var shader_module304_code = "";
-    try {
-        shader_module304_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module304.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module304 = await device30.createShaderModule({ label: "shader_module304", code: shader_module304_code })
-    const compute_pipeline3022 = device30.createComputePipeline({
-        label: "compute_pipeline3022",
-        layout: pipeline_layout308,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const command_encoder103 = device10.createCommandEncoder({ label: "command_encoder103" });
-    render_pass_encoder2000.setScissorRect(0, 0, texture201.width / 2, texture201.height / 2);
-    
-    const compute_pipeline3023 = device30.createComputePipeline({
-        label: "compute_pipeline3023",
-        layout: pipeline_layout307,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline2010 = device20.createComputePipeline({
-        label: "compute_pipeline2010",
-        layout: pipeline_layout200,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    
-    
-    const compute_pipeline3024 = device30.createComputePipeline({
-        label: "compute_pipeline3024",
-        layout: pipeline_layout309,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2010.setStencilReference(1);
-    
-    const sampler201 = device20.createSampler( { label: "sampler201" } );
-    
-    
-    
-    
-    render_pass_encoder2000.setViewport(0, 0, texture201.width / 2, texture201.height / 2, 0, 1);
-    render_bundle_encoder302.insertDebugMarker("marker");
-    const pipeline_layout208 = device20.createPipelineLayout({ 
-        label: "pipeline_layout208",
-        bindGroupLayouts: [bind_group_layout202]
-    });
-    
-    
-    const compute_pipeline3025 = device30.createComputePipeline({
-        label: "compute_pipeline3025",
-        layout: pipeline_layout308,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    render_bundle_encoder200.popDebugGroup();
-    
-    
-    
-    const render_pipeline105 = device10.createRenderPipeline({
-        label: "render_pipeline105",
-        vertex: {
-            module: shader_module103,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module103,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    compute_pass_encoder1020.pushDebugGroup("group_marker")
-    const compute_pipeline2011 = device20.createComputePipeline({
-        label: "compute_pipeline2011",
-        layout: pipeline_layout206,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline2012 = device20.createComputePipeline({
-        label: "compute_pipeline2012",
-        layout: pipeline_layout203,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline2013 = device20.createComputePipeline({
-        label: "compute_pipeline2013",
-        layout: pipeline_layout205,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3026 = device30.createComputePipeline({
-        label: "compute_pipeline3026",
-        layout: pipeline_layout303,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    render_bundle_encoder300.popDebugGroup();
-    render_pass_encoder2010.setBlendConstant([1.0, 0.0, 0.0, 1.0]);
-    const sampler500 = device50.createSampler( { label: "sampler500" } );
-    const compute_pipeline2014 = device20.createComputePipeline({
-        label: "compute_pipeline2014",
-        layout: pipeline_layout205,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    const sampler105 = device10.createSampler( { label: "sampler105" } );
-    
-    const compute_pass_encoder1030 = command_encoder103.beginComputePass({ label: "compute_pass_encoder1030" });
-    const compute_pipeline3027 = device30.createComputePipeline({
-        label: "compute_pipeline3027",
-        layout: pipeline_layout300,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    
-    const compute_pipeline3028 = device30.createComputePipeline({
-        label: "compute_pipeline3028",
-        layout: pipeline_layout300,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3029 = device30.createComputePipeline({
-        label: "compute_pipeline3029",
-        layout: pipeline_layout307,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    const render_pipeline206 = device20.createRenderPipeline({
-        label: "render_pipeline206",
-        vertex: {
-            module: shader_module200,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module200,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    const compute_pipeline3030 = device30.createComputePipeline({
-        label: "compute_pipeline3030",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    const render_pipeline106 = device10.createRenderPipeline({
-        label: "render_pipeline106",
-        vertex: {
-            module: shader_module100,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module100,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    command_encoder301.resolveQuerySet(
-        query300,
-        0,
-        32,
-        buffer300,
-        0
-    )
-    
-    render_pass_encoder2010.setViewport(0, 0, texture201.width / 2, texture201.height / 2, 0, 1);
-    
-    const render_pipeline107 = device10.createRenderPipeline({
-        label: "render_pipeline107",
-        vertex: {
-            module: shader_module108,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module108,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    render_bundle_encoder200.setPipeline(render_pipeline201);
-    
-    buffer302.destroy()
-    
-    
-    const buffer304 = device30.createBuffer({
-        label: "buffer304",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer305 = device30.createBuffer({
-        label: "buffer305",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
-    
-    const bind_group301 = device30.createBindGroup({
-        label: "bind_group301",
-        layout: render_pipeline300.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer304,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer305,
-                },
-            },
-        ],
-    });
-
-    render_bundle_encoder302.setBindGroup(0, bind_group301);
-    compute_pass_encoder3000.popDebugGroup()
-    const query500 = device50.createQuerySet({
-        label: "query500",
-        type: "occlusion",
-        count: 32,
-    });
-    const pipeline_layout3010 = device30.createPipelineLayout({ 
-        label: "pipeline_layout3010",
-        bindGroupLayouts: [bind_group_layout302]
-    });
-    command_encoder301.insertDebugMarker("mymarker");
-    const compute_pipeline3031 = device30.createComputePipeline({
-        label: "compute_pipeline3031",
-        layout: pipeline_layout308,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3032 = device30.createComputePipeline({
-        label: "compute_pipeline3032",
-        layout: pipeline_layout302,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    
-    const command_encoder500 = device50.createCommandEncoder({ label: "command_encoder500" });
-    const buffer500 = device50.createBuffer({
-        label: "buffer500",
-        size: 400,
-        usage: GPUBufferUsage.INDEX
-    });
-    
-    device10.queue.submit([command_buffer101, ]);
-    const pipeline_layout3011 = device30.createPipelineLayout({ 
-        label: "pipeline_layout3011",
-        bindGroupLayouts: [bind_group_layout300]
-    });
-    compute_pass_encoder3000.insertDebugMarker("marker")
-    const buffer102 = device10.createBuffer({
-        label: "buffer102",
-        size: 400,
-        usage: GPUBufferUsage.INDIRECT
-    });
-    const compute_pipeline3033 = device30.createComputePipeline({
-        label: "compute_pipeline3033",
-        layout: pipeline_layout301,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3034 = device30.createComputePipeline({
-        label: "compute_pipeline3034",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    
-    const compute_pipeline3035 = device30.createComputePipeline({
-        label: "compute_pipeline3035",
-        layout: pipeline_layout305,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    
-    const compute_pipeline3036 = device30.createComputePipeline({
-        label: "compute_pipeline3036",
-        layout: pipeline_layout303,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3037 = device30.createComputePipeline({
-        label: "compute_pipeline3037",
-        layout: pipeline_layout309,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3038 = device30.createComputePipeline({
-        label: "compute_pipeline3038",
-        layout: pipeline_layout306,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    
-    
-    buffer500.destroy()
-    const render_pipeline108 = device10.createRenderPipeline({
-        label: "render_pipeline108",
-        vertex: {
-            module: shader_module1010,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module1010,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    const render_bundle_encoder201 = device20.createRenderBundleEncoder({
-        label: "render_bundle_encoder201",
-        colorFormats: ["bgra8unorm"]
-    });
-    const compute_pipeline2015 = device20.createComputePipeline({
-        label: "compute_pipeline2015",
-        layout: pipeline_layout201,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2000.setScissorRect(0, 0, texture201.width / 2, texture201.height / 2);
-    render_bundle_encoder201.setPipeline(render_pipeline202);
-    
-    render_pass_encoder2010.end();
-    const query202 = device20.createQuerySet({
-        label: "query202",
-        type: "occlusion",
-        count: 32,
-    });
-    const compute_pipeline3039 = device30.createComputePipeline({
-        label: "compute_pipeline3039",
-        layout: pipeline_layout309,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3040 = device30.createComputePipeline({
-        label: "compute_pipeline3040",
-        layout: pipeline_layout308,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    command_encoder201.insertDebugMarker("mymarker");
-    const render_bundle_encoder500 = device50.createRenderBundleEncoder({
-        label: "render_bundle_encoder500",
-        colorFormats: ["bgra8unorm"]
-    });
-    const compute_pipeline3041 = device30.createComputePipeline({
-        label: "compute_pipeline3041",
-        layout: pipeline_layout301,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    query201.destroy()
-    const render_pipeline303 = device30.createRenderPipeline({
-        label: "render_pipeline303",
-        vertex: {
-            module: shader_module303,
-            entryPoint: "vertex_main",
-            buffers: [
-                {
-                    attributes: [
-                        {
-                            shaderLocation: 0, // position
-                            offset: 0,
-                            format: "float32x4",
-                        },
-                        {
-                            shaderLocation: 1, // color
-                            offset: 16,
-                            format: "float32x4",
-                        },
-                    ],
-                    arrayStride: 32,
-                    stepMode: "vertex",
-                },
-            ],
-        },
-        fragment: {
-            module: shader_module303,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: gpu.getPreferredCanvasFormat(),
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        layout: "auto"
-    });
-    
-    const compute_pass_encoder5000 = command_encoder500.beginComputePass({ label: "compute_pass_encoder5000" });
-    const texture300 = device30.createTexture({
-        label: "texture300",
+    const texture004 = device00.createTexture({
+        label: "texture004",
         size: [10, 10],
         usage: GPUTextureUsage.TEXTURE_BINDING,
         format: "r32float",
         dimension: "2d"
     });
     
-    const buffer306 = device30.createBuffer({
-        label: "buffer306",
+    render_pass_encoder6010.setScissorRect(0, 0, texture602.width / 2, texture602.height / 2);
+    
+    
+    render_pass_encoder6010.setStencilReference(1);
+    const compute_pipeline007 = device00.createComputePipeline({
+        label: "compute_pipeline007",
+        layout: pipeline_layout001,
+        compute: {
+            module: shader_module005,
+            entryPoint: "main"
+        }
+    });
+    query002.destroy()
+    const sampler603 = device60.createSampler( { label: "sampler603" } );
+    
+    
+    render_bundle_encoder001.insertDebugMarker("marker");
+    const buffer601 = device60.createBuffer({
+        label: "buffer601",
         size: 400,
-        usage: GPUBufferUsage.UNIFORM
+        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE
     });
-
-    const buffer307 = device30.createBuffer({
-        label: "buffer307",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
+    buffer601.destroy()
+    const query003 = device00.createQuerySet({
+        label: "query003",
+        type: "occlusion",
+        count: 32,
     });
-    
-    const bind_group302 = device30.createBindGroup({
-        label: "bind_group302",
-        layout: render_pipeline301.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer306,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer307,
-                },
-            },
-        ],
-    });
-
-    render_bundle_encoder301.setBindGroup(0, bind_group302);
+    device60.queue.writeTexture({ texture: texture601 }, array6, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    query002.destroy()
+    render_pass_encoder6000.setStencilReference(1);
+    device60.queue.writeTexture({ texture: texture601 }, array6, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    render_pass_encoder6020.insertDebugMarker("marker");
+    texture601.destroy();
     
     
-    render_bundle_encoder302.insertDebugMarker("marker");
-    const render_pipeline109 = device10.createRenderPipeline({
-        label: "render_pipeline109",
+    query002.destroy()
+    const texture_view0040 = texture004.createView({ label: "texture_view0040" });
+    buffer0011.destroy()
+    
+    const compute_pipeline008 = device00.createComputePipeline({
+        label: "compute_pipeline008",
+        layout: pipeline_layout000,
+        compute: {
+            module: shader_module004,
+            entryPoint: "main"
+        }
+    });
+    
+    const texture607 = device60.createTexture({
+        label: "texture607",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_SRC,
+        format: "r32float",
+        dimension: "2d"
+    });
+    render_pass_encoder6020.setViewport(0, 0, texture601.width / 2, texture601.height / 2, 0, 1);
+    render_pass_encoder6010.executeBundles([])
+    
+    device60.queue.writeTexture({ texture: texture604 }, array2, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    compute_pass_encoder0000.insertDebugMarker("marker")
+    buffer0015.destroy()
+    
+    
+    render_pass_encoder6000.setBlendConstant([1.0, 0.0, 0.0, 1.0]);
+    const query604 = device60.createQuerySet({
+        label: "query604",
+        type: "occlusion",
+        count: 32,
+    });
+    const texture608 = device60.createTexture({
+        label: "texture608",
+        size: [10, 10],
+        usage: GPUTextureUsage.COPY_DST,
+        format: "r32float",
+        dimension: "2d"
+    });
+    buffer0010.destroy()
+    
+    device60.queue.writeTexture({ texture: texture608 }, array2, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    const sampler604 = device60.createSampler( { label: "sampler604" } );
+    device60.queue.writeTexture({ texture: texture608 }, array6, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    render_pass_encoder6020.insertDebugMarker("marker");
+    
+    var shader_module606_code = "";
+    try {
+        shader_module606_code = await fs.readFile(__dirname + '/shader_module606.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module606 = await device60.createShaderModule({ label: "shader_module606", code: shader_module606_code })
+    const render_pipeline601 = device60.createRenderPipeline({
+        label: "render_pipeline601",
         vertex: {
-            module: shader_module100,
+            module: shader_module602,
             entryPoint: "vertex_main",
             buffers: [
                 {
@@ -2291,7 +1239,7 @@ async function main(gpu: GPU) {
             ],
         },
         fragment: {
-            module: shader_module100,
+            module: shader_module602,
             entryPoint: "fragment_main",
             targets: [
                 {
@@ -2304,592 +1252,391 @@ async function main(gpu: GPU) {
         },
         layout: "auto"
     });
-    const compute_pipeline3042 = device30.createComputePipeline({
-        label: "compute_pipeline3042",
-        layout: pipeline_layout306,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    var shader_module1011_code = "";
-    try {
-        shader_module1011_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module1011 = await device10.createShaderModule({ label: "shader_module1011", code: shader_module1011_code })
-    buffer304.destroy()
-    const buffer103 = device10.createBuffer({
-        label: "buffer103",
-        size: 400,
-        usage: GPUBufferUsage.QUERY_RESOLVE
-    });
-    const render_pass_encoder2011 = command_encoder201.beginRenderPass({
-        label: "render_pass_encoder2011",
-        colorAttachments: [
-            {
-                clearValue: [0.0, 0.5, 1.0, 1.0],
-                loadOp: "clear",
-                storeOp: "store",
-                view: texture_view2020,
-            },
-        ],
-        occlusionQuerySet: query201
-    });
+    render_pass_encoder6000.setPipeline(render_pipeline600);
+    device00.queue.submit([command_buffer005, ]);
+    query002.destroy()
+    device60.queue.writeTexture({ texture: texture608 }, array0, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
     
-    const compute_pipeline3043 = device30.createComputePipeline({
-        label: "compute_pipeline3043",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const pipeline_layout209 = device20.createPipelineLayout({ 
-        label: "pipeline_layout209",
-        bindGroupLayouts: [bind_group_layout200]
-    });
-    query200.destroy()
-    const buffer207 = device20.createBuffer({
-        label: "buffer207",
+    render_pass_encoder6020.setViewport(0, 0, texture601.width / 2, texture601.height / 2, 0, 1);
+    
+    const buffer602 = device60.createBuffer({
+        label: "buffer602",
         size: 400,
         usage: GPUBufferUsage.UNIFORM
     });
 
-    const buffer208 = device20.createBuffer({
-        label: "buffer208",
+    const buffer603 = device60.createBuffer({
+        label: "buffer603",
         size: 400,
         usage: GPUBufferUsage.STORAGE
     });
     
-    const bind_group202 = device20.createBindGroup({
-        label: "bind_group202",
-        layout: render_pipeline202.getBindGroupLayout(0),
+    const bind_group600 = device60.createBindGroup({
+        label: "bind_group600",
+        layout: render_pipeline600.getBindGroupLayout(0),
         entries: [
             {
                 binding: 0,
                 resource: {
-                    buffer: buffer207,
+                    buffer: buffer602,
                 },
             },
             {
                 binding: 1,
                 resource: {
-                    buffer: buffer208,
+                    buffer: buffer603,
                 },
             },
         ],
     });
 
-    render_bundle_encoder201.setBindGroup(0, bind_group202);
-    const compute_pipeline3044 = device30.createComputePipeline({
-        label: "compute_pipeline3044",
-        layout: pipeline_layout305,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    var shader_module1012_code = "";
-    try {
-        shader_module1012_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/shader_module1012.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module1012 = await device10.createShaderModule({ label: "shader_module1012", code: shader_module1012_code })
-    device10.pushErrorScope("out-of-memory");
-    const compute_pipeline3045 = device30.createComputePipeline({
-        label: "compute_pipeline3045",
-        layout: pipeline_layout309,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    const command_encoder202 = device20.createCommandEncoder({ label: "command_encoder202" });
-    const compute_pipeline3046 = device30.createComputePipeline({
-        label: "compute_pipeline3046",
-        layout: pipeline_layout305,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const command_encoder203 = device20.createCommandEncoder({ label: "command_encoder203" });
-    const render_pass_encoder2020 = command_encoder202.beginRenderPass({
-        label: "render_pass_encoder2020",
-        colorAttachments: [
-            {
-                clearValue: [0.0, 0.5, 1.0, 1.0],
-                loadOp: "clear",
-                storeOp: "store",
-                view: texture_view2020,
-            },
-        ],
-        occlusionQuerySet: undefined
-    });
-    buffer201.destroy()
-    const compute_pipeline3047 = device30.createComputePipeline({
-        label: "compute_pipeline3047",
-        layout: pipeline_layout302,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
+    render_pass_encoder6000.setBindGroup(0, bind_group600);
+    const sampler005 = device00.createSampler( { label: "sampler005" } );
     
-    const compute_pipeline3048 = device30.createComputePipeline({
-        label: "compute_pipeline3048",
-        layout: pipeline_layout301,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    render_pass_encoder2020.setViewport(0, 0, texture202.width / 2, texture202.height / 2, 0, 1);
-    compute_pass_encoder3000.insertDebugMarker("marker")
-    render_pass_encoder2020.setPipeline(render_pipeline204);
+    device60.queue.writeTexture({ texture: texture608 }, array2, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    device60.queue.writeTexture({ texture: texture604 }, array0, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
     
+    const texture_view6070 = texture607.createView({ label: "texture_view6070" });
     
-    const buffer501 = device50.createBuffer({
-        label: "buffer501",
-        size: 400,
-        usage: GPUBufferUsage.COPY_DST
+    const adapter8 = await gpu.requestAdapter({
+        powerPreference: "low-power"
     });
-    compute_pass_encoder3000.pushDebugGroup("group_marker")
-    compute_pass_encoder5000.pushDebugGroup("group_marker")
-    const command_encoder302 = device30.createCommandEncoder({ label: "command_encoder302" });
-    const compute_pass_encoder3020 = command_encoder302.beginComputePass({ label: "compute_pass_encoder3020" });
-    compute_pass_encoder3020.setPipeline(compute_pipeline3042);
-    const buffer209 = device20.createBuffer({
-        label: "buffer209",
+    device60.queue.writeTexture({ texture: texture608 }, array0, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    device00.queue.submit([command_buffer003, ]);
+    const buffer0016 = device00.createBuffer({
+        label: "buffer0016",
         size: 400,
         usage: GPUBufferUsage.UNIFORM
     });
 
-    const buffer2010 = device20.createBuffer({
-        label: "buffer2010",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
-    
-    const bind_group203 = device20.createBindGroup({
-        label: "bind_group203",
-        layout: render_pipeline201.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer209,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer2010,
-                },
-            },
-        ],
-    });
-
-    render_bundle_encoder200.setBindGroup(0, bind_group203);
-    const compute_pipeline3049 = device30.createComputePipeline({
-        label: "compute_pipeline3049",
-        layout: pipeline_layout304,
-        compute: {
-            module: shader_module301,
-            entryPoint: "main"
-        }
-    });
-    const compute_pipeline3050 = device30.createComputePipeline({
-        label: "compute_pipeline3050",
-        layout: pipeline_layout306,
-        compute: {
-            module: shader_module302,
-            entryPoint: "main"
-        }
-    });
-    
-    
-    
-    
-    const texture_view3000 = texture300.createView({ label: "texture_view3000" });
-    var shader_module500_code = "";
-    try {
-        shader_module500_code = await fs.readFile('/Users/matthew/Documents/msc/final_proj/dawn_coverage_final/third_party/webgpu-cts/src/webgpu/api/operation/wg_fuzz/render_shader.wgsl', 'utf8');
-    } catch (err) {
-        console.log(err);
-    }
-    const shader_module500 = await device50.createShaderModule({ label: "shader_module500", code: shader_module500_code })
-    query500.destroy()
-    
-    
-    const render_pass_encoder2030 = command_encoder203.beginRenderPass({
-        label: "render_pass_encoder2030",
-        colorAttachments: [
-            {
-                clearValue: [0.0, 0.5, 1.0, 1.0],
-                loadOp: "clear",
-                storeOp: "store",
-                view: texture_view2010,
-            },
-        ],
-        occlusionQuerySet: query201
-    });
-    
-    
-    
-    render_pass_encoder2020.setViewport(0, 0, texture202.width / 2, texture202.height / 2, 0, 1);
-    const command_encoder204 = device20.createCommandEncoder({ label: "command_encoder204" });
-    const compute_pipeline2016 = device20.createComputePipeline({
-        label: "compute_pipeline2016",
-        layout: pipeline_layout206,
-        compute: {
-            module: shader_module201,
-            entryPoint: "main"
-        }
-    });
-    render_bundle_encoder200.setVertexBuffer(0, buffer201);
-    const compute_pipeline3051 = device30.createComputePipeline({
-        label: "compute_pipeline3051",
-        layout: pipeline_layout306,
-        compute: {
-            module: shader_module304,
-            entryPoint: "main"
-        }
-    });
-    const compute_pass_encoder3010 = command_encoder301.beginComputePass({ label: "compute_pass_encoder3010" });
-    query201.destroy()
-    const render_pass_encoder2040 = command_encoder204.beginRenderPass({
-        label: "render_pass_encoder2040",
-        colorAttachments: [
-            {
-                clearValue: [0.0, 0.5, 1.0, 1.0],
-                loadOp: "clear",
-                storeOp: "store",
-                view: texture_view2010,
-            },
-        ],
-        occlusionQuerySet: query202
-    });
-    render_bundle_encoder200.insertDebugMarker("marker");
-    compute_pass_encoder3010.setPipeline(compute_pipeline3029);
-    device50.pushErrorScope("out-of-memory");
-    render_pass_encoder2030.setPipeline(render_pipeline200);
-    render_bundle_encoder200.drawIndirect(buffer200, 0);
-    device50.queue.writeBuffer(buffer501, 0, array0, 0, array0.length);
-    
-    render_pass_encoder2040.setPipeline(render_pipeline200);
-    render_pass_encoder2011.setPipeline(render_pipeline204);
-    const buffer2011 = device20.createBuffer({
-        label: "buffer2011",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer2012 = device20.createBuffer({
-        label: "buffer2012",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
-    
-    const bind_group204 = device20.createBindGroup({
-        label: "bind_group204",
-        layout: render_pipeline200.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer2011,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer2012,
-                },
-            },
-        ],
-    });
-
-    render_pass_encoder2030.setBindGroup(0, bind_group204);
-    compute_pass_encoder1020.popDebugGroup()
-    const buffer308 = device30.createBuffer({
-        label: "buffer308",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer309 = device30.createBuffer({
-        label: "buffer309",
+    const buffer0017 = device00.createBuffer({
+        label: "buffer0017",
         size: 400,
         usage: GPUBufferUsage.STORAGE
     });
         
-    const bind_group303 = device30.createBindGroup({
-        label: "bind_group303",
-        layout: compute_pipeline3029.getBindGroupLayout(0),
+    const bind_group005 = device00.createBindGroup({
+        label: "bind_group005",
+        layout: compute_pipeline003.getBindGroupLayout(0),
         entries: [
             {
                 binding: 0,
                 resource: {
-                    buffer: buffer308,
+                    buffer: buffer0016,
                 },
             },
             {
                 binding: 1,
                 resource: {
-                    buffer: buffer309,
+                    buffer: buffer0017,
                 },
             },
         ],
     });
 
-    compute_pass_encoder3010.setBindGroup(0, bind_group303);
-    compute_pass_encoder3010.dispatchWorkgroups(100);
-    compute_pass_encoder3010.end();
-    const buffer2013 = device20.createBuffer({
-        label: "buffer2013",
+    compute_pass_encoder0020.setBindGroup(0, bind_group005);
+    const texture_view6080 = texture608.createView({ label: "texture_view6080" });
+    device60.queue.writeTexture({ texture: texture604 }, array3, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    
+    device60.queue.writeTexture({ texture: texture608 }, array6, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    const buffer0018 = device00.createBuffer({
+        label: "buffer0018",
         size: 400,
         usage: GPUBufferUsage.UNIFORM
     });
 
-    const buffer2014 = device20.createBuffer({
-        label: "buffer2014",
+    const buffer0019 = device00.createBuffer({
+        label: "buffer0019",
         size: 400,
         usage: GPUBufferUsage.STORAGE
     });
-    
-    const bind_group205 = device20.createBindGroup({
-        label: "bind_group205",
-        layout: render_pipeline204.getBindGroupLayout(0),
+        
+    const bind_group006 = device00.createBindGroup({
+        label: "bind_group006",
+        layout: compute_pipeline001.getBindGroupLayout(0),
         entries: [
             {
                 binding: 0,
                 resource: {
-                    buffer: buffer2013,
+                    buffer: buffer0018,
                 },
             },
             {
                 binding: 1,
                 resource: {
-                    buffer: buffer2014,
+                    buffer: buffer0019,
                 },
             },
         ],
     });
 
-    render_pass_encoder2011.setBindGroup(0, bind_group205);
-    compute_pass_encoder3000.popDebugGroup()
-    device20.popErrorScope().then((error) => {
-        if (error) {
-            console.error(`An error occurred: ${error.message}`);
+    compute_pass_encoder0040.setBindGroup(0, bind_group006);
+    const texture_view6081 = texture608.createView({ label: "texture_view6081" });
+    const compute_pipeline009 = device00.createComputePipeline({
+        label: "compute_pipeline009",
+        layout: pipeline_layout000,
+        compute: {
+            module: shader_module005,
+            entryPoint: "main"
         }
     });
-    command_encoder301.popDebugGroup()
-    render_pass_encoder2000.setVertexBuffer(0, buffer201);
-    device30.popErrorScope().then((error) => {
-        if (error) {
-            console.error(`An error occurred: ${error.message}`);
-        }
+    
+    device00.queue.writeBuffer(buffer0012, 0, array4, 0, array4.length);
+    texture602.destroy();
+    compute_pass_encoder0040.dispatchWorkgroups(100);
+    const buffer0020 = device00.createBuffer({
+        label: "buffer0020",
+        size: 400,
+        usage: GPUBufferUsage.INDIRECT
     });
-    render_pass_encoder2011.setVertexBuffer(0, buffer201);
-    render_pass_encoder2011.draw(3);
-    const buffer2015 = device20.createBuffer({
-        label: "buffer2015",
+    compute_pass_encoder0010.dispatchWorkgroups(100);
+    compute_pass_encoder0020.insertDebugMarker("marker")
+    const array7 = new Float32Array([-0.25, 0.5, -1.0, 0.5, 0.75, 0.75, -0.75, -0.25, -0.5, -0.5, 0.0, -1.0, -0.5, 0.75, 1.0, 0.25, 0.75, -0.5, 1.0, 0.75, 1.0, 1.0, 0.0, 0.25, 0.25, 1.0, -0.75, 1.0, -0.5, -0.5, 0.5, -0.25, -0.5, 0.0, -0.25, -0.25, 0.75, -1.0, -0.75, -1.0, -0.25, -0.75, -0.75, -0.75, -1.0, 0.75, 0.0, -1.0, -0.75, 1.0, 0.5, 1.0, 0.25, -0.75, -0.25, -0.75, 0.75, 1.0, 1.0, -0.75, 0.25, 1.0, -1.0, -0.5, -1.0, 0.0, 0.0, -1.0, -0.5, 0.0, 0.0, -1.0, 1.0, -0.75, -1.0, 0.0, 0.25, -1.0, 0.75, -1.0, 0.75, -0.5, 1.0, 0.0, -1.0, 0.25, 0.0, -1.0, -0.5, 0.75, 0.5, -0.25, 0.0, 1.0, 0.75, 0.5, -1.0, -0.75, -0.25, -0.5, ]);
+    device00.queue.writeBuffer(buffer0012, 0, array0, 0, array0.length);
+    const texture_view6082 = texture608.createView({ label: "texture_view6082" });
+    device00.queue.writeBuffer(buffer0012, 0, array3, 0, array3.length);
+    
+    const device80 = await adapter8!.requestDevice({ label: "device80" });
+    
+    const device50 = await adapter5!.requestDevice({ label: "device50" });
+    
+    render_bundle_encoder000.setVertexBuffer(0, buffer000);
+    
+    render_pass_encoder6020.setPipeline(render_pipeline601);
+    
+    
+    device60.queue.writeTexture({ texture: texture604 }, array0, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    device00.pushErrorScope("out-of-memory");
+    const buffer604 = device60.createBuffer({
+        label: "buffer604",
         size: 400,
         usage: GPUBufferUsage.UNIFORM
     });
 
-    const buffer2016 = device20.createBuffer({
-        label: "buffer2016",
+    const buffer605 = device60.createBuffer({
+        label: "buffer605",
         size: 400,
         usage: GPUBufferUsage.STORAGE
     });
     
-    const bind_group206 = device20.createBindGroup({
-        label: "bind_group206",
-        layout: render_pipeline200.getBindGroupLayout(0),
+    const bind_group601 = device60.createBindGroup({
+        label: "bind_group601",
+        layout: render_pipeline601.getBindGroupLayout(0),
         entries: [
             {
                 binding: 0,
                 resource: {
-                    buffer: buffer2015,
+                    buffer: buffer604,
                 },
             },
             {
                 binding: 1,
                 resource: {
-                    buffer: buffer2016,
+                    buffer: buffer605,
                 },
             },
         ],
     });
 
-    render_pass_encoder2040.setBindGroup(0, bind_group206);
-    const buffer2017 = device20.createBuffer({
-        label: "buffer2017",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer2018 = device20.createBuffer({
-        label: "buffer2018",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
+    render_pass_encoder6020.setBindGroup(0, bind_group601);
+    compute_pass_encoder0040.pushDebugGroup("group_marker")
     
-    const bind_group207 = device20.createBindGroup({
-        label: "bind_group207",
-        layout: render_pipeline204.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer2017,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer2018,
-                },
-            },
-        ],
-    });
-
-    render_pass_encoder2020.setBindGroup(0, bind_group207);
-    render_pass_encoder2030.setVertexBuffer(0, buffer201);
-    render_pass_encoder2030.draw(3);
-    compute_pass_encoder5000.popDebugGroup()
-    device10.popErrorScope().then((error) => {
+    render_pass_encoder6010.executeBundles([])
+    device00.queue.writeBuffer(buffer0012, 0, array2, 0, array2.length);
+    
+    device60.popErrorScope().then((error) => {
         if (error) {
             console.error(`An error occurred: ${error.message}`);
         }
     });
-    render_pass_encoder2020.setVertexBuffer(0, buffer201);
-    render_pass_encoder2020.drawIndirect(buffer200, 0);
-    render_pass_encoder2030.end();
-    render_pass_encoder2000.drawIndirect(buffer200, 0);
-    render_pass_encoder2020.end();
-    const command_buffer301 = command_encoder301.finish();
-    const command_buffer203 = command_encoder203.finish();
-    render_pass_encoder2011.end();
-    render_pass_encoder2000.end();
-    render_pass_encoder2040.setVertexBuffer(0, buffer201);
-    const command_buffer200 = command_encoder200.finish();
-    render_pass_encoder2040.draw(3);
+    
+    var shader_module007_code = "";
+    try {
+        shader_module007_code = await fs.readFile(__dirname + '/render_shader.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module007 = await device00.createShaderModule({ label: "shader_module007", code: shader_module007_code })
+    
+    
+    device00.queue.writeBuffer(buffer0012, 0, array7, 0, array7.length);
+    const query500 = device50.createQuerySet({
+        label: "query500",
+        type: "occlusion",
+        count: 32,
+    });
+    const uint32_0020 = new Uint32Array(3);
+
+    uint32_0020[0] = 100;
+    uint32_0020[1] = 1;
+    uint32_0020[2] = 1;
+
+    const buffer0021 = device00.createBuffer({
+        label: "buffer0021",
+        size: 400,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT,
+    });
+    device00.queue.writeBuffer(buffer0021, 0, uint32_0020, 0, uint32_0020.length);
+
+    compute_pass_encoder0020.dispatchWorkgroupsIndirect(buffer0021, 0);
+    buffer0020.destroy()
+    
+    render_pass_encoder6020.pushDebugGroup("group_marker");
+    device00.queue.writeBuffer(buffer0021, 0, array1, 0, array1.length);
+    const adapter9 = await gpu.requestAdapter({
+        powerPreference: "low-power"
+    });
+    
+    var shader_module607_code = "";
+    try {
+        shader_module607_code = await fs.readFile(__dirname + '/render_shader.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module607 = await device60.createShaderModule({ label: "shader_module607", code: shader_module607_code })
+    device60.queue.writeTexture({ texture: texture608 }, array0, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    query603.destroy()
+    
+    render_pass_encoder6000.setViewport(0, 0, texture602.width / 2, texture602.height / 2, 0, 1);
+    render_pass_encoder6020.setViewport(0, 0, texture601.width / 2, texture601.height / 2, 0, 1);
+    
+    
+    const texture800 = device80.createTexture({
+        label: "texture800",
+        size: [10, 10],
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        format: "r32float",
+        dimension: "2d"
+    });
+    device00.queue.writeBuffer(buffer0012, 0, array7, 0, array7.length);
+    
+    
+    render_pass_encoder6010.setPipeline(render_pipeline601);
+    device60.queue.writeTexture({ texture: texture608 }, array6, { bytesPerRow: 40, rowsPerImage: 10 }, { width: 10, height: 10 });
+    
+    
+    
+    texture608.destroy();
+    device00.queue.writeBuffer(buffer0021, 0, array4, 0, array4.length);
+    var shader_module800_code = "";
+    try {
+        shader_module800_code = await fs.readFile(__dirname + '/shader_module800.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module800 = await device80.createShaderModule({ label: "shader_module800", code: shader_module800_code })
+    
+    query600.destroy()
+    var shader_module008_code = "";
+    try {
+        shader_module008_code = await fs.readFile(__dirname + '/render_shader.wgsl', 'utf8');
+    } catch (err) {
+        console.log(err);
+    }
+    const shader_module008 = await device00.createShaderModule({ label: "shader_module008", code: shader_module008_code })
+    texture004.destroy();
+    const render_pipeline602 = device60.createRenderPipeline({
+        label: "render_pipeline602",
+        vertex: {
+            module: shader_module602,
+            entryPoint: "vertex_main",
+            buffers: [
+                {
+                    attributes: [
+                        {
+                            shaderLocation: 0, // position
+                            offset: 0,
+                            format: "float32x4",
+                        },
+                        {
+                            shaderLocation: 1, // color
+                            offset: 16,
+                            format: "float32x4",
+                        },
+                    ],
+                    arrayStride: 32,
+                    stepMode: "vertex",
+                },
+            ],
+        },
+        fragment: {
+            module: shader_module602,
+            entryPoint: "fragment_main",
+            targets: [
+                {
+                    format: gpu.getPreferredCanvasFormat(),
+                },
+            ],
+        },
+        primitive: {
+            topology: "triangle-list",
+        },
+        layout: "auto"
+    });
+    device50.pushErrorScope("out-of-memory");
+    buffer603.destroy()
+    device00.queue.writeBuffer(buffer0012, 0, array6, 0, array6.length);
+    
+    
+    render_pass_encoder6020.popDebugGroup();
     device50.popErrorScope().then((error) => {
         if (error) {
             console.error(`An error occurred: ${error.message}`);
         }
     });
-    const command_buffer201 = command_encoder201.finish();
-    const command_buffer202 = command_encoder202.finish();
-    const buffer3010 = device30.createBuffer({
-        label: "buffer3010",
+    compute_pass_encoder0020.end();
+    compute_pass_encoder0040.popDebugGroup()
+    const command_buffer002 = command_encoder002.finish();
+    const buffer606 = device60.createBuffer({
+        label: "buffer606",
         size: 400,
         usage: GPUBufferUsage.UNIFORM
     });
 
-    const buffer3011 = device30.createBuffer({
-        label: "buffer3011",
+    const buffer607 = device60.createBuffer({
+        label: "buffer607",
         size: 400,
         usage: GPUBufferUsage.STORAGE
     });
-        
-    const bind_group304 = device30.createBindGroup({
-        label: "bind_group304",
-        layout: compute_pipeline3042.getBindGroupLayout(0),
+    
+    const bind_group602 = device60.createBindGroup({
+        label: "bind_group602",
+        layout: render_pipeline601.getBindGroupLayout(0),
         entries: [
             {
                 binding: 0,
                 resource: {
-                    buffer: buffer3010,
+                    buffer: buffer606,
                 },
             },
             {
                 binding: 1,
                 resource: {
-                    buffer: buffer3011,
+                    buffer: buffer607,
                 },
             },
         ],
     });
 
-    compute_pass_encoder3020.setBindGroup(0, bind_group304);
-    render_pass_encoder2040.end();
-    const uint32_3020 = new Uint32Array(3);
-
-    uint32_3020[0] = 100;
-    uint32_3020[1] = 1;
-    uint32_3020[2] = 1;
-
-    const buffer3012 = device30.createBuffer({
-        label: "buffer3012",
-        size: 400,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT,
+    render_pass_encoder6010.setBindGroup(0, bind_group602);
+    compute_pass_encoder0000.end();
+    compute_pass_encoder0010.popDebugGroup()
+    render_pass_encoder6010.popDebugGroup();
+    const command_buffer000 = command_encoder000.finish();
+    compute_pass_encoder0040.end();
+    command_encoder004.popDebugGroup()
+    compute_pass_encoder0010.end();
+    const command_buffer004 = command_encoder004.finish();
+    device00.popErrorScope().then((error) => {
+        if (error) {
+            console.error(`An error occurred: ${error.message}`);
+        }
     });
-    device30.queue.writeBuffer(buffer3012, 0, uint32_3020, 0, uint32_3020.length);
-
-    compute_pass_encoder3020.dispatchWorkgroupsIndirect(buffer3012, 0);
-    device30.queue.submit([command_buffer301, ]);
-    device20.queue.submit([command_buffer202, command_buffer203, ]);
-    device20.queue.submit([command_buffer200, command_buffer201, ]);
-    compute_pass_encoder3020.end();
-    const buffer3013 = device30.createBuffer({
-        label: "buffer3013",
-        size: 400,
-        usage: GPUBufferUsage.UNIFORM
-    });
-
-    const buffer3014 = device30.createBuffer({
-        label: "buffer3014",
-        size: 400,
-        usage: GPUBufferUsage.STORAGE
-    });
-        
-    const bind_group305 = device30.createBindGroup({
-        label: "bind_group305",
-        layout: compute_pipeline308.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: buffer3013,
-                },
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: buffer3014,
-                },
-            },
-        ],
-    });
-
-    compute_pass_encoder3000.setBindGroup(0, bind_group305);
-    const uint32_3000 = new Uint32Array(3);
-
-    uint32_3000[0] = 100;
-    uint32_3000[1] = 1;
-    uint32_3000[2] = 1;
-
-    const buffer3015 = device30.createBuffer({
-        label: "buffer3015",
-        size: 400,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT,
-    });
-    device30.queue.writeBuffer(buffer3015, 0, uint32_3000, 0, uint32_3000.length);
-
-    compute_pass_encoder3000.dispatchWorkgroupsIndirect(buffer3015, 0);
-    const command_buffer302 = command_encoder302.finish();
-    const command_buffer204 = command_encoder204.finish();
-    compute_pass_encoder3000.end();
-    command_encoder300.popDebugGroup()
-    const command_buffer300 = command_encoder300.finish();
-    device30.queue.submit([command_buffer302, ]);
-    device20.queue.submit([command_buffer204, ]);
-    device30.queue.submit([command_buffer300, ]);
+    device00.queue.submit([command_buffer002, command_buffer004, ]);
+    const command_buffer001 = command_encoder001.finish();
+    device00.queue.submit([command_buffer000, ]);
 }

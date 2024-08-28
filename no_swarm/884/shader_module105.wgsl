@@ -1,34 +1,42 @@
 struct Struct_1 {
-    a: bool,
-    b: i32,
-    c: vec3<u32>,
-    d: bool,
+    a: u32,
+    b: f32,
+    c: vec4<bool>,
+    d: u32,
+    e: u32,
 }
 
 struct Struct_2 {
-    a: vec4<f32>,
-    b: u32,
-    c: vec2<bool>,
+    a: bool,
 }
 
 struct Struct_3 {
-    a: Struct_2,
-    b: vec3<bool>,
-    c: vec4<f32>,
+    a: u32,
+    b: f32,
+}
+
+struct Struct_4 {
+    a: i32,
+}
+
+struct Struct_5 {
+    a: Struct_3,
+    b: Struct_4,
+    c: Struct_1,
     d: vec2<f32>,
-    e: Struct_2,
+    e: vec3<f32>,
 }
 
 struct UniformBuffer {
     a: u32,
-    b: i32,
+    b: u32,
 }
 
 struct StorageBuffer {
     a: u32,
     b: u32,
-    c: vec2<u32>,
-    d: vec3<u32>,
+    c: vec3<f32>,
+    d: i32,
 }
 
 @group(0)
@@ -39,83 +47,103 @@ var<uniform> u_input: UniformBuffer;
 @binding(1)
 var<storage, read_write> s_output: StorageBuffer;
 
-var<private> global0: bool = true;
+fn _wgslsmith_clamp_u32(e: u32, low: u32, high: u32) -> u32 {
+    return select(clamp(e, low, high), clamp(e, high, low), low > high);
+}
 
-var<private> global1: array<vec4<i32>, 13>;
+fn _wgslsmith_div_vec2_u32(a: vec2<u32>, b: vec2<u32>) -> vec2<u32> {
+    return select(a / b, a / vec2<u32>(2u), (b[0i] == 0u) || (b[1i] == 0u));
+}
+
+fn _wgslsmith_div_f32(a: f32, b: f32) -> f32 {
+    return select(f32(42f), f32(-123f), abs(a / b) > abs(a));
+}
+
+fn _wgslsmith_f_op_vec3_f32(v: vec3<f32>) -> vec3<f32> {
+    return select(v, vec3<f32>(10f), any(abs(v) < vec3<f32>(0.1f)) || any(abs(v) >= vec3<f32>(16777216f)));
+}
+
+fn _wgslsmith_dot_vec3_u32(a: vec3<u32>, b: vec3<u32>) -> u32 {
+    return dot(clamp(a, vec3<u32>(0u), vec3<u32>(37837u)), clamp(b, vec3<u32>(0u), vec3<u32>(37837u)));
+}
 
 fn _wgslsmith_f_op_vec4_f32(v: vec4<f32>) -> vec4<f32> {
     return select(v, vec4<f32>(10f), any(abs(v) < vec4<f32>(0.1f)) || any(abs(v) >= vec4<f32>(16777216f)));
 }
 
-fn _wgslsmith_div_vec2_f32(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
-    return select(vec2<f32>(42f), vec2<f32>(-123f), (abs(a[0i] / b[0i]) > abs(a[0i])) || (abs(a[1i] / b[1i]) > abs(a[1i])));
+fn _wgslsmith_mult_u32(a: u32, b: u32) -> u32 {
+    return select(a * b, a, (b != 0u) && (a > (4294967295u / b)));
+}
+
+fn _wgslsmith_mod_u32(a: u32, b: u32) -> u32 {
+    return select(a % b, a, b == 0u);
+}
+
+fn _wgslsmith_div_i32(a: i32, b: i32) -> i32 {
+    return select(a / b, a / i32(2i), ((a == i32(-2147483648)) && (b == -1i)) || (b == 0i));
+}
+
+fn _wgslsmith_mod_i32(a: i32, b: i32) -> i32 {
+    return select(a % b, a, (a < 0i) || (b <= 0i));
+}
+
+fn _wgslsmith_sub_i32(a: i32, b: i32) -> i32 {
+    return select(a - b, a, ((b < 0i) && (a > (2147483647i + b))) || ((b > 0i) && (a < (i32(-2147483648) + b))));
 }
 
 fn _wgslsmith_f_op_f32(v: f32) -> f32 {
     return select(v, f32(10f), (abs(v) < f32(0.1f)) || (abs(v) >= f32(16777216f)));
 }
 
-fn _wgslsmith_sub_u32(a: u32, b: u32) -> u32 {
-    return select(a - b, a, a < b);
+fn _wgslsmith_dot_vec4_i32(a: vec4<i32>, b: vec4<i32>) -> i32 {
+    return dot(clamp(a, vec4<i32>(-23170i), vec4<i32>(23170i)), clamp(b, vec4<i32>(-23170i), vec4<i32>(23170i)));
 }
 
 fn _wgslsmith_f_op_vec2_f32(v: vec2<f32>) -> vec2<f32> {
     return select(v, vec2<f32>(10f), any(abs(v) < vec2<f32>(0.1f)) || any(abs(v) >= vec2<f32>(16777216f)));
 }
 
-fn _wgslsmith_div_vec4_f32(a: vec4<f32>, b: vec4<f32>) -> vec4<f32> {
-    return select(vec4<f32>(42f), vec4<f32>(-123f), (((abs(a[0i] / b[0i]) > abs(a[0i])) || (abs(a[1i] / b[1i]) > abs(a[1i]))) || (abs(a[2i] / b[2i]) > abs(a[2i]))) || (abs(a[3i] / b[3i]) > abs(a[3i])));
+fn _wgslsmith_div_u32(a: u32, b: u32) -> u32 {
+    return select(a / b, a / u32(2u), b == 0u);
 }
 
-fn _wgslsmith_index_u32(index: u32, size: u32) -> u32 {
-    return index % size;
+fn func_3(arg_0: vec4<f32>) -> i32 {
+    let var_0 = Struct_1(~u_input.a, _wgslsmith_f_op_f32(_wgslsmith_f_op_f32(-arg_0.x) - -818f), select(select(vec4<bool>(true, true, true, true), select(vec4<bool>(true, true, true, true), select(vec4<bool>(true, false, true, true), vec4<bool>(true, false, true, false), false), true), true), select(!select(vec4<bool>(false, false, false, true), vec4<bool>(true, false, false, true), vec4<bool>(true, true, false, true)), select(vec4<bool>(true, true, true, true), vec4<bool>(true, true, true, true), any(vec2<bool>(false, true))), !select(vec4<bool>(true, false, true, true), vec4<bool>(true, true, false, false), true)), false), 0u, u_input.a);
+    var var_1 = 1u;
+    var var_2 = select(var_0.c.xyx, select(var_0.c.yyy, select(!(!var_0.c.xwz), !var_0.c.wzy, var_0.c.x), !(!var_0.c.x)), !vec3<bool>(var_0.c.x, var_0.c.x, !(!var_0.c.x)));
+    var_1 = var_0.d;
+    var_2 = select(var_0.c.xxw, var_0.c.xyw, true);
+    return (_wgslsmith_sub_i32(1i, -_wgslsmith_div_i32(3472i, 29197i)) << (reverseBits(~var_0.e) % 32u)) >> (1u % 32u);
 }
 
-fn _wgslsmith_dot_vec2_u32(a: vec2<u32>, b: vec2<u32>) -> u32 {
-    return dot(clamp(a, vec2<u32>(0u), vec2<u32>(46340u)), clamp(b, vec2<u32>(0u), vec2<u32>(46340u)));
+fn func_2(arg_0: bool, arg_1: f32, arg_2: vec2<bool>) -> f32 {
+    var var_0 = _wgslsmith_f_op_vec3_f32(-_wgslsmith_f_op_vec3_f32(abs(vec3<f32>(_wgslsmith_f_op_f32(-_wgslsmith_f_op_f32(min(688f, arg_1))), -752f, _wgslsmith_f_op_f32(abs(1384f))))));
+    var var_1 = Struct_3(~_wgslsmith_mod_u32(~_wgslsmith_dot_vec3_u32(vec3<u32>(0u, u_input.a, 45812u), vec3<u32>(0u, u_input.b, 34703u)), abs(24408u)), _wgslsmith_div_f32(_wgslsmith_f_op_f32(181f + arg_1), _wgslsmith_f_op_f32(abs(arg_1))));
+    var_1 = Struct_3(28960u, _wgslsmith_f_op_f32(-var_0.x));
+    var var_2 = Struct_2(!all(select(!vec3<bool>(arg_2.x, arg_2.x, false), !vec3<bool>(arg_2.x, true, false), true)));
+    let var_3 = Struct_4(_wgslsmith_mod_i32(~func_3(_wgslsmith_f_op_vec4_f32(vec4<f32>(var_1.b, var_1.b, var_0.x, var_1.b) + vec4<f32>(arg_1, 909f, var_1.b, 620f))), -1i));
+    return arg_1;
 }
 
-fn _wgslsmith_add_u32(a: u32, b: u32) -> u32 {
-    return select(a + b, a, a > (u32(4294967295u) - b));
-}
-
-fn func_1(arg_0: Struct_3) -> bool {
-    let var_0 = 1u;
-    let var_1 = arg_0.b.zx;
-    global0 = true;
-    global1 = array<vec4<i32>, 13>();
-    global0 = !arg_0.a.c.x;
-    return false;
-}
-
-fn func_3(arg_0: Struct_1, arg_1: vec2<u32>, arg_2: Struct_3, arg_3: f32) -> bool {
-    let var_0 = arg_2.e;
-    let var_1 = Struct_3(arg_2.a, arg_2.b, _wgslsmith_f_op_vec4_f32(_wgslsmith_f_op_vec4_f32(_wgslsmith_f_op_vec4_f32(-var_0.a) * arg_2.a.a) * vec4<f32>(_wgslsmith_f_op_f32(f32(-1f) * -370f), _wgslsmith_f_op_f32(ceil(arg_3)), _wgslsmith_f_op_f32(-2149f * -771f), _wgslsmith_f_op_f32(-1000f * _wgslsmith_f_op_f32(-arg_2.c.x)))), arg_2.d, var_0);
-    global0 = false;
-    global1 = array<vec4<i32>, 13>();
-    var var_2 = 4294967295u;
-    return var_1.a.c.x;
-}
-
-fn func_2(arg_0: vec3<f32>, arg_1: vec4<bool>, arg_2: f32, arg_3: Struct_1) -> bool {
-    let var_0 = countOneBits(~abs(arg_3.c.x));
-    let var_1 = vec4<i32>(arg_3.b, arg_3.b, abs(min(-u_input.b, -u_input.b)), firstTrailingBit(-(i32(-1i) * -1i))) ^ ~abs(~global1[_wgslsmith_index_u32(0u, 13u)]);
-    let var_2 = _wgslsmith_f_op_vec4_f32(-vec4<f32>(arg_0.x, _wgslsmith_f_op_f32(ceil(arg_0.x)), 1000f, arg_2));
-    var var_3 = !select(select(vec2<bool>(func_3(Struct_1(arg_1.x, -4691i, arg_3.c, false), arg_3.c.xx, Struct_3(Struct_2(vec4<f32>(-1660f, arg_2, -483f, -1091f), 0u, vec2<bool>(arg_3.d, false)), arg_1.zwz, var_2, var_2.zw, Struct_2(var_2, arg_3.c.x, vec2<bool>(true, false))), arg_0.x), !arg_1.x), !arg_1.xw, false), vec2<bool>(any(vec2<bool>(true, false)), func_3(Struct_1(arg_1.x, var_1.x, arg_3.c, arg_3.a), vec2<u32>(12029u, var_0), Struct_3(Struct_2(vec4<f32>(-1929f, -761f, var_2.x, var_2.x), u_input.a, vec2<bool>(arg_3.d, true)), arg_1.zzz, var_2, arg_0.yx, Struct_2(vec4<f32>(-717f, arg_2, var_2.x, arg_0.x), 4294967295u, vec2<bool>(false, arg_1.x))), var_2.x)), any(vec4<bool>(!arg_3.d, arg_3.a, true, true)));
-    var var_4 = arg_3.b;
-    return !(((firstLeadingBit(var_1.x) << (~arg_3.c.x % 32u)) <= 28034i) & false);
+fn func_1(arg_0: u32) -> u32 {
+    var var_0 = _wgslsmith_f_op_f32(-_wgslsmith_f_op_f32(_wgslsmith_f_op_f32(_wgslsmith_f_op_f32(func_2(false, -1516f, vec2<bool>(true, false))) * _wgslsmith_f_op_f32(func_2(false, -971f, vec2<bool>(false, false)))) * 616f)) <= _wgslsmith_f_op_f32(min(_wgslsmith_f_op_f32(abs(_wgslsmith_f_op_f32(ceil(1180f)))), _wgslsmith_f_op_f32(round(_wgslsmith_f_op_f32(f32(-1f) * -1453f)))));
+    var_0 = true;
+    let var_1 = Struct_5(Struct_3(min(u_input.b, 38650u), 958f), Struct_4(abs(firstLeadingBit(reverseBits(26042i)))), Struct_1(~97732u, _wgslsmith_f_op_f32(f32(-1f) * -1007f), vec4<bool>(true, true, false, false), _wgslsmith_div_u32(~arg_0 << (arg_0 % 32u), arg_0), 56929u), _wgslsmith_f_op_vec2_f32(abs(_wgslsmith_f_op_vec2_f32(-_wgslsmith_f_op_vec2_f32(-_wgslsmith_f_op_vec2_f32(vec2<f32>(-694f, -1300f) * vec2<f32>(-309f, 1094f)))))), _wgslsmith_f_op_vec3_f32(-_wgslsmith_f_op_vec3_f32(-_wgslsmith_f_op_vec3_f32(abs(_wgslsmith_f_op_vec3_f32(-vec3<f32>(-545f, -857f, 216f)))))));
+    var_0 = var_1.c.c.x;
+    var var_2 = !var_1.c.c;
+    return var_1.a.a;
 }
 
 @compute
 @workgroup_size(1)
 fn main() {
-    global1 = array<vec4<i32>, 13>();
-    let var_0 = vec3<u32>(u_input.a, ~_wgslsmith_add_u32(max(u_input.a, u_input.a), ~_wgslsmith_dot_vec2_u32(vec2<u32>(75499u, u_input.a), vec2<u32>(24439u, 49378u))), ~0u);
-    let var_1 = Struct_3(Struct_2(_wgslsmith_f_op_vec4_f32(-_wgslsmith_div_vec4_f32(_wgslsmith_f_op_vec4_f32(-vec4<f32>(740f, -303f, -552f, -739f)), vec4<f32>(1492f, -150f, -1655f, 552f))), var_0.x, select(vec2<bool>(true, true), vec2<bool>(true, true), select(select(vec2<bool>(false, false), vec2<bool>(true, true), vec2<bool>(false, false)), select(vec2<bool>(true, true), vec2<bool>(true, false), false), true))), select(select(select(vec3<bool>(false, true, false), vec3<bool>(true, false, false), all(vec4<bool>(false, false, true, false))), vec3<bool>(all(vec2<bool>(true, false)), true, func_1(Struct_3(Struct_2(vec4<f32>(-275f, -956f, -1025f, 837f), var_0.x, vec2<bool>(false, false)), vec3<bool>(true, true, true), vec4<f32>(-1000f, 1763f, 797f, 434f), vec2<f32>(-967f, 841f), Struct_2(vec4<f32>(-1060f, -437f, -501f, 1375f), u_input.a, vec2<bool>(true, true))))), 1u >= _wgslsmith_sub_u32(u_input.a, var_0.x)), vec3<bool>(true, !func_2(vec3<f32>(-277f, -609f, -372f), vec4<bool>(true, true, true, false), -1000f, Struct_1(false, u_input.b, var_0, true)), any(vec2<bool>(true, true))), !all(select(vec4<bool>(true, true, false, true), vec4<bool>(false, false, false, false), true))), _wgslsmith_f_op_vec4_f32(_wgslsmith_f_op_vec4_f32(vec4<f32>(1f, -306f, 589f, _wgslsmith_f_op_f32(-795f - 310f)) + _wgslsmith_f_op_vec4_f32(-vec4<f32>(-1822f, 892f, -944f, -1750f))) - _wgslsmith_f_op_vec4_f32(_wgslsmith_f_op_vec4_f32(abs(_wgslsmith_f_op_vec4_f32(-vec4<f32>(-159f, -745f, -809f, 446f)))) * _wgslsmith_f_op_vec4_f32(-vec4<f32>(-1479f, -313f, -383f, 534f)))), _wgslsmith_f_op_vec2_f32(trunc(_wgslsmith_f_op_vec2_f32(min(_wgslsmith_div_vec2_f32(_wgslsmith_f_op_vec2_f32(vec2<f32>(1394f, 327f) * vec2<f32>(-647f, 246f)), _wgslsmith_f_op_vec2_f32(select(vec2<f32>(-1157f, -2085f), vec2<f32>(-1314f, 1000f), vec2<bool>(true, false)))), _wgslsmith_f_op_vec2_f32(abs(_wgslsmith_f_op_vec2_f32(round(vec2<f32>(-560f, -992f))))))))), Struct_2(_wgslsmith_f_op_vec4_f32(trunc(vec4<f32>(_wgslsmith_f_op_f32(ceil(2006f)), _wgslsmith_f_op_f32(209f - -758f), _wgslsmith_f_op_f32(select(-178f, -1421f, true)), _wgslsmith_f_op_f32(f32(-1f) * -711f)))), 30u & var_0.x, !select(select(vec2<bool>(false, false), vec2<bool>(true, false), vec2<bool>(true, true)), vec2<bool>(true, false), true)));
-    var var_2 = -654f;
-    var_2 = -250f;
-    global0 = false;
+    var var_0 = func_1(u_input.b);
+    var var_1 = Struct_1(4294967295u, 724f, !select(!select(vec4<bool>(true, false, false, false), vec4<bool>(false, false, true, false), false), select(select(vec4<bool>(false, false, false, false), vec4<bool>(true, true, true, true), vec4<bool>(false, false, false, false)), vec4<bool>(true, true, true, true), vec4<bool>(false, true, false, false)), true), u_input.a, 12616u >> (u_input.b % 32u));
+    let var_2 = -1i;
+    let var_3 = Struct_3(0u, var_1.b);
+    var var_4 = ~vec4<i32>(_wgslsmith_dot_vec4_i32(vec4<i32>(2147483647i, var_2, -2147483647i, 1i), abs(vec4<i32>(var_2, var_2, 1i, var_2) >> (vec4<u32>(u_input.a, 1u, 1u, u_input.a) % vec4<u32>(32u)))), _wgslsmith_mod_i32(1i, var_2), firstTrailingBit(countOneBits(var_2)) >> (_wgslsmith_mult_u32(~u_input.b, 1u | var_3.a) % 32u), ~(max(var_2, 79047i) & var_2));
+    var var_5 = max(~_wgslsmith_div_vec2_u32(vec2<u32>(u_input.a, ~var_3.a), ~firstLeadingBit(vec2<u32>(var_1.a, u_input.b))), reverseBits(vec2<u32>(39463u, _wgslsmith_clamp_u32(var_1.d, var_1.d, var_1.e) ^ 1u)));
     let x = u_input.a;
-    s_output = StorageBuffer(0u, ~(~u_input.a), ~(var_0.xx & ((vec2<u32>(4294967295u, var_0.x) & vec2<u32>(var_1.a.b, 0u)) | vec2<u32>(16423u, var_1.a.b))), var_0);
+    s_output = StorageBuffer(~(u_input.a ^ ~min(23627u, 4294967295u)), 70977u >> (var_5.x % 32u), _wgslsmith_f_op_vec3_f32(_wgslsmith_f_op_vec3_f32(min(_wgslsmith_f_op_vec3_f32(min(_wgslsmith_f_op_vec3_f32(-vec3<f32>(-1689f, 471f, var_3.b)), _wgslsmith_f_op_vec3_f32(vec3<f32>(-217f, var_3.b, 1118f) * vec3<f32>(var_3.b, var_3.b, var_1.b)))), vec3<f32>(var_1.b, _wgslsmith_f_op_f32(floor(var_1.b)), 600f))) - vec3<f32>(var_1.b, _wgslsmith_f_op_f32(f32(-1f) * -505f), -1056f)), select(-(~var_4.x), var_2, any(vec2<bool>(var_1.c.x, var_4.x < 0i))));
 }
 
